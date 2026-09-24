@@ -3,320 +3,377 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô Phỏng Tĩnh Điện: Áo Len & Bong Bóng</title>
+  <title>Bảng Điều Khiển Thí Nghiệm Nhiệt Học</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    :root {
+      --bg-dark: #121820;
+      --card-bg: #1e2638;
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --hot-color: #ff4500;
+      --cold-color: #00bfff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #111827;
-      color: #f3f4f6;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-badge {
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(0, 191, 255, 0.15);
+      color: var(--cold-color);
+      border: 1px solid var(--cold-color);
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr 340px;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Nhiệt kế mô phỏng */
+    .thermometer-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    h1 { margin-bottom: 8px; font-size: 24px; color: #f9fafb; }
-    p.desc { margin-bottom: 20px; font-size: 14px; color: #9ca3af; text-align: center; max-width: 650px; }
-
-    canvas {
-      background: #1f2937;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      cursor: grab;
-      touch-action: none;
-    }
-    canvas:active { cursor: grabbing; }
-
-    .controls {
-      margin-top: 15px;
-      display: flex;
       gap: 15px;
     }
-    button.action-btn {
-      background: #3b82f6;
-      color: #ffffff;
-      border: none;
-      padding: 10px 20px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
+
+    .thermometer {
+      width: 24px;
+      height: 220px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--card-border);
+      border-radius: 12px 12px 0 0;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      padding: 3px;
     }
-    button.action-btn:hover { background: #2563eb; }
+
+    .thermometer-fill {
+      width: 100%;
+      height: 25%;
+      background: linear-gradient(to top, var(--cold-color), #ff8c00);
+      border-radius: 8px 8px 0 0;
+      transition: height 0.3s ease, background 0.3s ease;
+    }
+
+    .temp-display {
+      font-size: 2.2rem;
+      font-weight: bold;
+      font-family: monospace;
+      color: var(--cold-color);
+      transition: color 0.3s ease;
+    }
+
+    /* Đồ thị */
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    /* Control Panel */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-group label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--hot-color);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--hot-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      box-shadow: 0 0 12px rgba(255, 69, 0, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
   </style>
 </head>
 <body>
 
-  <h1>Thí Nghiệm Tĩnh Điện (Electrostatics)</h1>
-  <p class="desc">
-    Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> hoặc <b>Áo len</b> để xem lực hút!
-  </p>
+  <header>
+    <h1>🔥 Phòng Thí Nghiệm Nhiệt Học</h1>
+    <span class="status-badge" id="statusBadge">Trạng thái: Ổn định</span>
+  </header>
 
-  <canvas id="simCanvas" width="800" height="450"></canvas>
+  <div class="grid-layout">
+    <!-- Cột 1: Cảm biến Nhiệt kế -->
+    <div class="card thermometer-container">
+      <div class="card-title">Nhiệt Độ Hiện Tại</div>
+      <div class="thermometer">
+        <div class="thermometer-fill" id="tempFill"></div>
+      </div>
+      <div class="temp-display" id="tempValue">25.0 °C</div>
+    </div>
 
-  <div class="controls">
-    <button class="action-btn" id="resetBtn">Đặt Lại Thí Nghiệm</button>
+    <!-- Cột 2: Đồ thị Thời gian thực -->
+    <div class="card">
+      <div class="card-title">Đồ Thị Biến Thiên Nhiệt Độ Theo Thời Gian (t)</div>
+      <div class="chart-container">
+        <canvas id="tempChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Cột 3: Bảng Bảng điều khiển -->
+    <div class="card controls">
+      <div class="card-title">Thông Số Thí Nghiệm</div>
+      
+      <div class="control-group">
+        <label for="powerRange">Công suất gia nhiệt (W): <b id="powerVal">500 W</b></label>
+        <input type="range" id="powerRange" min="100" max="2000" step="100" value="500">
+      </div>
+
+      <div class="control-group">
+        <label for="massRange">Khối lượng chất lỏng (kg): <b id="massVal">1.0 kg</b></label>
+        <input type="range" id="massRange" min="0.2" max="5.0" step="0.1" value="1.0">
+      </div>
+
+      <div class="btn-group">
+        <button class="btn-primary" id="startBtn">Bắt đầu gia nhiệt</button>
+        <button class="btn-secondary" id="resetBtn">Đặt lại</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const canvas = document.getElementById('simCanvas');
-    const ctx = canvas.getContext('2d');
+    // Khởi tạo các biến trạng thái
+    let currentTemp = 25.0;
+    let isHeating = false;
+    let timeStep = 0;
+    let intervalId = null;
 
-    // Nạp chính xác 2 tên ảnh từ GitHub
-    const sweaterImg = new Image();
-    const balloonImg = new Image();
+    // Element references
+    const tempValueEl = document.getElementById('tempValue');
+    const tempFillEl = document.getElementById('tempFill');
+    const statusBadgeEl = document.getElementById('statusBadge');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    
+    const powerRange = document.getElementById('powerRange');
+    const powerVal = document.getElementById('powerVal');
+    const massRange = document.getElementById('massRange');
+    const massVal = document.getElementById('massVal');
 
-    sweaterImg.src = './1790256541776.png';
-    balloonImg.src = './1790256519761.png';
+    // Cập nhật giá trị Slider
+    powerRange.addEventListener('input', (e) => powerVal.textContent = `${e.target.value} W`);
+    massRange.addEventListener('input', (e) => massVal.textContent = `${e.target.value} kg`);
 
-    // Cấu hình đối tượng
-    const sweater = { x: 70, y: 100, w: 180, h: 250, charges: [] };
-    const wall = { x: 630, y: 50, w: 110, h: 350, charges: [] };
-    const balloon = { x: 380, y: 200, r: 45, vx: 0, vy: 0, negativeCharges: 0, isDragging: false };
-
-    // Khởi tạo điện tích
-    function initCharges() {
-      sweater.charges = [];
-      wall.charges = [];
-      balloon.negativeCharges = 0;
-      balloon.x = 380;
-      balloon.y = 200;
-      balloon.vx = 0;
-      balloon.vy = 0;
-
-      // Áo len chứa 20 cặp điện tích (+ -)
-      for (let i = 0; i < 20; i++) {
-        sweater.charges.push({
-          x: sweater.x + 30 + Math.random() * (sweater.w - 60),
-          y: sweater.y + 30 + Math.random() * (sweater.h - 60),
-          hasElectron: true
-        });
-      }
-
-      // Bức tường chứa lưới các cặp điện tích (+ -)
-      for (let r = 0; r < 7; r++) {
-        for (let c = 0; c < 3; c++) {
-          wall.charges.push({
-            baseX: wall.x + 20 + c * 35,
-            baseY: wall.y + 30 + r * 45,
-            pX: wall.x + 20 + c * 35,
-            pY: wall.y + 30 + r * 45,
-            eX: wall.x + 20 + c * 35 + 12,
-            eY: wall.y + 30 + r * 45
-          });
+    // Khởi tạo đồ thị Chart.js
+    const ctx = document.getElementById('tempChart').getContext('2d');
+    const tempChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [0],
+        datasets: [{
+          label: 'Nhiệt độ (°C)',
+          data: [25.0],
+          borderColor: '#00bfff',
+          backgroundColor: 'rgba(0, 191, 255, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: { display: true, text: 'Thời gian (giây)', color: '#94a3b8' },
+            ticks: { color: '#94a3b8' },
+            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+          },
+          y: {
+            title: { display: true, text: 'Nhiệt độ (°C)', color: '#94a3b8' },
+            ticks: { color: '#94a3b8' },
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            suggestedMin: 20,
+            suggestedMax: 100
+          }
+        },
+        plugins: {
+          legend: { labels: { color: '#e2e8f0' } }
         }
       }
-    }
-
-    // Vẽ dấu cộng (+) MÀU ĐỎ TƯƠI ĐỂ KHÔNG TRÙNG MÀU BÓNG
-    function drawPlus(x, y) {
-      ctx.strokeStyle = '#ff4d4d';
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.moveTo(x - 6, y); ctx.lineTo(x + 6, y);
-      ctx.moveTo(x, y - 6); ctx.lineTo(x, y + 6);
-      ctx.stroke();
-    }
-
-    // Vẽ dấu trừ (-) MÀU XANH DƯƠNG
-    function drawMinus(x, y) {
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.moveTo(x - 6, y); ctx.lineTo(x + 6, y);
-      ctx.stroke();
-    }
-
-    // Tương tác kéo thả chuột / cảm ứng
-    let dragOffsetX = 0, dragOffsetY = 0;
-
-    function handleStart(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      const mx = clientX - rect.left;
-      const my = clientY - rect.top;
-      const dist = Math.hypot(mx - balloon.x, my - balloon.y);
-
-      if (dist < balloon.r) {
-        balloon.isDragging = true;
-        dragOffsetX = mx - balloon.x;
-        dragOffsetY = my - balloon.y;
-        balloon.vx = 0;
-        balloon.vy = 0;
-      }
-    }
-
-    function handleMove(clientX, clientY) {
-      if (!balloon.isDragging) return;
-      const rect = canvas.getBoundingClientRect();
-      balloon.x = clientX - rect.left - dragOffsetX;
-      balloon.y = clientY - rect.top - dragOffsetY;
-    }
-
-    function handleEnd() { balloon.isDragging = false; }
-
-    canvas.addEventListener('mousedown', (e) => handleStart(e.clientX, e.clientY));
-    window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
-    window.addEventListener('mouseup', handleEnd);
-
-    canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length > 0) handleStart(e.touches[0].clientX, e.touches[0].clientY);
     });
-    window.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
-    });
-    window.addEventListener('touchend', handleEnd);
 
-    // Cập nhật mô phỏng vật lý ổn định
-    function update() {
-      // 1. Cọ xát -> Nhận Electron khi tiếp xúc áo len
-      if (balloon.isDragging) {
-        sweater.charges.forEach(q => {
-          if (q.hasElectron) {
-            const dist = Math.hypot(balloon.x - q.x, balloon.y - q.y);
-            if (dist < balloon.r) {
-              q.hasElectron = false;
-              balloon.negativeCharges++;
-            }
-          }
-        });
+    // Cập nhật giao diện nhiệt độ
+    function updateUI(temp) {
+      tempValueEl.textContent = `${temp.toFixed(1)} °C`;
+      
+      // Tính phần trăm cột nhiệt kế (20°C - 100°C)
+      const fillPercentage = Math.min(Math.max(((temp - 20) / 80) * 100, 5), 100);
+      tempFillEl.style.height = `${fillPercentage}%`;
+
+      // Chuyển đổi màu sắc khi nhiệt độ tăng
+      if (temp > 60) {
+        const color = '#ff4500';
+        tempValueEl.style.color = color;
+        tempChart.data.datasets[0].borderColor = color;
+        tempChart.data.datasets[0].backgroundColor = 'rgba(255, 69, 0, 0.1)';
+      } else {
+        const color = '#00bfff';
+        tempValueEl.style.color = color;
+        tempChart.data.datasets[0].borderColor = color;
+        tempChart.data.datasets[0].backgroundColor = 'rgba(0, 191, 255, 0.1)';
       }
-
-      // 2. Phân cực điện tích bức tường
-      wall.charges.forEach(pair => {
-        const dist = Math.hypot(balloon.x - pair.baseX, balloon.y - pair.baseY);
-        if (dist < 180 && balloon.negativeCharges > 0) {
-          const angle = Math.atan2(pair.baseY - balloon.y, pair.baseX - balloon.x);
-          const pushForce = Math.min(16, (1 - dist / 180) * 14 * (balloon.negativeCharges / 8));
-          pair.eX = pair.baseX + Math.cos(angle) * pushForce;
-          pair.eY = pair.baseY + Math.sin(angle) * pushForce;
-        } else {
-          pair.eX += (pair.baseX + 12 - pair.eX) * 0.1;
-          pair.eY += (pair.baseY - pair.eY) * 0.1;
-        }
-      });
-
-      // 3. Chuẩn hóa chuyển động của bóng (Tránh bay lung tung)
-      if (!balloon.isDragging) {
-        let fx = 0, fy = 0;
-
-        // --- Lực hút về Áo len (Tích điện dương) ---
-        const sweaterPositives = sweater.charges.filter(q => !q.hasElectron).length;
-        if (sweaterPositives > 0 && balloon.negativeCharges > 0) {
-          const sweaterCenterX = sweater.x + sweater.w / 2;
-          const sweaterCenterY = sweater.y + sweater.h / 2;
-          const dist = Math.hypot(sweaterCenterX - balloon.x, sweaterCenterY - balloon.y);
-
-          // Chỉ tác dụng lực nếu bóng ở gần áo len (bán kính < 250px)
-          if (dist < 250) {
-            const pullStrength = 0.12 * (sweaterPositives / 10) * (balloon.negativeCharges / 10);
-            fx += ((sweaterCenterX - balloon.x) / dist) * pullStrength;
-            fy += ((sweaterCenterY - balloon.y) / dist) * pullStrength;
-          }
-        }
-
-        // --- Lực hút về Bức tường (Do phân cực) ---
-        if (balloon.negativeCharges > 0) {
-          const distToWall = wall.x - (balloon.x + balloon.r);
-          // Chỉ hút khi bóng ở khá gần tường (< 150px)
-          if (distToWall > -20 && distToWall < 150) {
-            const wallPull = 0.2 * (balloon.negativeCharges / 10);
-            fx += wallPull;
-          }
-        }
-
-        // Áp dụng gia tốc và Ma sát không khí (Giúp bóng dừng mịn màng)
-        balloon.vx = (balloon.vx + fx) * 0.82;
-        balloon.vy = (balloon.vy + fy) * 0.82;
-
-        // Khống chế vận tốc tối đa
-        const speed = Math.hypot(balloon.vx, balloon.vy);
-        const maxSpeed = 6;
-        if (speed > maxSpeed) {
-          balloon.vx = (balloon.vx / speed) * maxSpeed;
-          balloon.vy = (balloon.vy / speed) * maxSpeed;
-        }
-
-        // Cập nhật vị trí
-        balloon.x += balloon.vx;
-        balloon.y += balloon.vy;
-
-        // Giới hạn biên không cho bóng văng ra khỏi màn hình
-        balloon.x = Math.max(balloon.r, Math.min(wall.x - balloon.r, balloon.x));
-        balloon.y = Math.max(balloon.r, Math.min(canvas.height - balloon.r, balloon.y));
-      }
+      tempChart.update('none');
     }
 
-    // Vẽ đồ họa Canvas
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // --- 1. VẼ ÁO LEN ---
-      if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
-        ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
-      } else {
-        ctx.fillStyle = '#374151';
-        ctx.beginPath();
-        ctx.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 16);
-        ctx.fill();
+    // Vòng lặp đun nóng (Mô phỏng Q = m * c * dT => dT = P * dt / (m * c))
+    function startHeating() {
+      if (isHeating) {
+        clearInterval(intervalId);
+        isHeating = false;
+        startBtn.textContent = 'Tiếp tục gia nhiệt';
+        statusBadgeEl.textContent = 'Trạng thái: Tạm dừng';
+        statusBadgeEl.style.color = '#ff8c00';
+        return;
       }
 
-      // Vẽ điện tích trên áo len
-      sweater.charges.forEach(q => {
-        drawPlus(q.x, q.y);
-        if (q.hasElectron) drawMinus(q.x + 8, q.y);
-      });
+      isHeating = true;
+      startBtn.textContent = 'Tạm dừng';
+      statusBadgeEl.textContent = 'Trạng thái: Đang gia nhiệt...';
+      statusBadgeEl.style.color = 'var(--hot-color)';
 
-      // --- 2. VẼ BỨC TƯỜNG ---
-      ctx.fillStyle = '#4b5563';
-      ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '14px sans-serif';
-      ctx.fillText('Bức Tường', wall.x + 20, wall.y - 10);
+      const c = 4184; // Nhiệt dung riêng của nước (J/kg.K)
 
-      // Vẽ các cặp điện tích trên tường
-      wall.charges.forEach(pair => {
-        drawPlus(pair.pX, pair.pY);
-        drawMinus(pair.eX, pair.eY);
-      });
+      intervalId = setInterval(() => {
+        if (currentTemp >= 100) {
+          clearInterval(intervalId);
+          isHeating = false;
+          startBtn.textContent = 'Đạt điểm sôi!';
+          statusBadgeEl.textContent = 'Trạng thái: Đạt điểm sôi (100°C)';
+          return;
+        }
 
-      // --- 3. VẼ BONG BÓNG ---
-      ctx.save();
-      if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
-        ctx.beginPath();
-        ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(balloonImg, balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
-      } else {
-        ctx.beginPath();
-        ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
-        ctx.fillStyle = '#f97316';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#fdba74';
-        ctx.stroke();
-      }
-      ctx.restore();
+        timeStep += 1;
+        const P = parseFloat(powerRange.value);
+        const m = parseFloat(massRange.value);
+        
+        // Tăng nhiệt độ
+        const deltaT = P / (m * c);
+        currentTemp += deltaT * 5; // Nhân hệ số để mô phỏng nhanh hơn
 
-      // Vẽ Electron bám trên quả bóng
-      for (let i = 0; i < balloon.negativeCharges; i++) {
-        const angle = (i / 15) * Math.PI * 2;
-        const rad = (i > 15 ? 0.6 : 0.35) * balloon.r;
-        const ex = balloon.x + Math.cos(angle) * rad;
-        const ey = balloon.y + Math.sin(angle) * rad;
-        drawMinus(ex, ey);
-      }
-
-      requestAnimationFrame(() => {
-        update();
-        render();
-      });
+        // Cập nhật biểu đồ
+        tempChart.data.labels.push(timeStep);
+        tempChart.data.datasets[0].data.push(currentTemp);
+        
+        updateUI(currentTemp);
+      }, 500);
     }
 
-    document.getElementById('resetBtn').addEventListener('click', initCharges);
+    // Đặt lại thí nghiệm
+    function resetExperiment() {
+      clearInterval(intervalId);
+      isHeating = false;
+      currentTemp = 25.0;
+      timeStep = 0;
 
-    initCharges();
-    render();
+      startBtn.textContent = 'Bắt đầu gia nhiệt';
+      statusBadgeEl.textContent = 'Trạng thái: Ổn định';
+      statusBadgeEl.style.color = 'var(--cold-color)';
+
+      tempChart.data.labels = [0];
+      tempChart.data.datasets[0].data = [25.0];
+      
+      updateUI(currentTemp);
+    }
+
+    startBtn.addEventListener('click', startHeating);
+    resetBtn.addEventListener('click', resetExperiment);
   </script>
 </body>
 </html>
