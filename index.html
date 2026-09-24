@@ -1214,43 +1214,65 @@
     }
 
     // Tương tác kéo thả chuột / cảm ứng
-    let dragOffsetX = 0, dragOffsetY = 0;
+    // Tương tác kéo thả chuột / cảm ứng
+let dragOffsetX = 0;
+let dragOffsetY = 0;
 
-    function handleStartStatic(clientX, clientY) {
-      const rect = canvasSim.getBoundingClientRect();
-      const mx = clientX - rect.left;
-      const my = clientY - rect.top;
-      const dist = Math.hypot(mx - balloon.x, my - balloon.y);
+function getCanvasPoint(clientX, clientY) {
+  const rect = canvasSim.getBoundingClientRect();
 
-      if (dist < balloon.r) {
-        balloon.isDragging = true;
-        dragOffsetX = mx - balloon.x;
-        dragOffsetY = my - balloon.y;
-        balloon.vx = 0;
-        balloon.vy = 0;
-      }
-    }
+  return {
+    x: (clientX - rect.left) * canvasSim.width / rect.width,
+    y: (clientY - rect.top) * canvasSim.height / rect.height
+  };
+}
 
-    function handleMoveStatic(clientX, clientY) {
-      if (!balloon.isDragging) return;
-      const rect = canvasSim.getBoundingClientRect();
-      balloon.x = clientX - rect.left - dragOffsetX;
-      balloon.y = clientY - rect.top - dragOffsetY;
-    }
+function clampBalloonPosition(x, y) {
+  return {
+    x: Math.max(balloon.r, Math.min(wall.x - balloon.r, x)),
+    y: Math.max(balloon.r, Math.min(canvasSim.height - balloon.r, y))
+  };
+}
 
-    function handleEndStatic() { balloon.isDragging = false; }
+function handleStartStatic(clientX, clientY) {
+  const point = getCanvasPoint(clientX, clientY);
+  const distance = Math.hypot(
+    point.x - balloon.x,
+    point.y - balloon.y
+  );
 
-    canvasSim.addEventListener('mousedown', (e) => handleStartStatic(e.clientX, e.clientY));
-    window.addEventListener('mousemove', (e) => handleMoveStatic(e.clientX, e.clientY));
-    window.addEventListener('mouseup', handleEndStatic);
+  if (distance <= balloon.r) {
+    balloon.isDragging = true;
+    dragOffsetX = point.x - balloon.x;
+    dragOffsetY = point.y - balloon.y;
+    balloon.vx = 0;
+    balloon.vy = 0;
+  }
+}
 
-    canvasSim.addEventListener('touchstart', (e) => {
-      if (e.touches.length > 0) handleStartStatic(e.touches[0].clientX, e.touches[0].clientY);
-    });
-    window.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 0) handleMoveStatic(e.touches[0].clientX, e.touches[0].clientY);
-    });
-    window.addEventListener('touchend', handleEndStatic);
+function handleMoveStatic(clientX, clientY) {
+  if (!balloon.isDragging) return;
+
+  const point = getCanvasPoint(clientX, clientY);
+  const position = clampBalloonPosition(
+    point.x - dragOffsetX,
+    point.y - dragOffsetY
+  );
+
+  balloon.x = position.x;
+  balloon.y = position.y;
+  balloon.vx = 0;
+  balloon.vy = 0;
+}
+
+function handleEndStatic() {
+  balloon.isDragging = false;
+  balloon.vx = 0;
+  balloon.vy = 0;
+}
+
+// Chu*
+
 
     // Cập nhật mô phỏng vật lý ổn định
     function updateStatic() {
