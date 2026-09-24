@@ -1,1 +1,280 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Phòng thí nghiệm Vật lí 12</title><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:Inter,system-ui,sans-serif;background:#f7f5f0;color:#1a1a1a}.card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 5px 20px #0000000d}iframe{width:100%;height:calc(100vh - 190px);min-height:650px;border:0;border-radius:14px}</style></head><body class="min-h-screen p-4 sm:p-8"><main class="max-w-7xl mx-auto"><header class="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-5 pb-5 border-b border-gray-300"><div><span class="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded">Vật lí 12 • Phòng thí nghiệm</span><h1 class="text-3xl sm:text-5xl font-black mt-3">Mô phỏng thí nghiệm vật lí.</h1><p class="text-gray-600 mt-2">Chọn một thí nghiệm để bắt đầu quan sát và tương tác.</p></div><label class="font-bold text-sm min-w-64">CHỌN THÍ NGHIỆM<select id="experiment" class="block w-full mt-1 p-3 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-red-500"><option value="thermal">1. Nhiệt học & chuyển thể</option><option value="electric">2. Tĩnh điện</option></select></label></header><section class="card p-2 sm:p-4"><iframe id="viewer" title="Thí nghiệm vật lí"></iframe></section></main><script>const viewer=document.getElementById('viewer'),select=document.getElementById('experiment');function openExperiment(){viewer.src=select.value==='thermal'?'nhiet-hoc.html':'dien-tich.html'}select.addEventListener('change',openExperiment);openExperiment();</script></body></html>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô Phỏng Tĩnh Điện</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #111827;
+      color: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 8px; font-size: 24px; color: #f9fafb; }
+    p.desc { margin-bottom: 20px; font-size: 14px; color: #9ca3af; text-align: center; max-width: 650px; }
+
+    canvas {
+      background: #1f2937;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      cursor: grab;
+      touch-action: none;
+    }
+    canvas:active { cursor: grabbing; }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 15px;
+    }
+    button.action-btn {
+      background: #3b82f6;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.action-btn:hover { background: #2563eb; }
+  </style>
+</head>
+<body>
+
+  <h1>Thí Nghiệm Tĩnh Điện (Electrostatics)</h1>
+  <p class="desc">
+    Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> để xem lực hút tĩnh điện!
+  </p>
+
+  <canvas id="simCanvas" width="800" height="450"></canvas>
+
+  <div class="controls">
+    <button class="action-btn" id="resetBtn">Đặt Lại Thí Nghiệm</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sweaterImg = new Image();
+    const balloonImg = new Image();
+
+    sweaterImg.src = './1790256541776.png';
+    balloonImg.src = './1790256519761.png';
+
+    const sweater = { x: 70, y: 100, w: 180, h: 250, charges: [] };
+    const wall = { x: 630, y: 50, w: 110, h: 350, charges: [] };
+    const balloon = { x: 380, y: 200, r: 45, vx: 0, vy: 0, negativeCharges: 0, isDragging: false };
+
+    function initCharges() {
+      sweater.charges = [];
+      wall.charges = [];
+      balloon.negativeCharges = 0;
+      balloon.x = 380;
+      balloon.y = 200;
+      balloon.vx = 0;
+      balloon.vy = 0;
+
+      for (let i = 0; i < 20; i++) {
+        sweater.charges.push({
+          x: sweater.x + 30 + Math.random() * (sweater.w - 60),
+          y: sweater.y + 30 + Math.random() * (sweater.h - 60),
+          hasElectron: true
+        });
+      }
+
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 3; c++) {
+          wall.charges.push({
+            baseX: wall.x + 20 + c * 35,
+            baseY: wall.y + 30 + r * 45,
+            pX: wall.x + 20 + c * 35,
+            pY: wall.y + 30 + r * 45,
+            eX: wall.x + 20 + c * 35 + 12,
+            eY: wall.y + 30 + r * 45
+          });
+        }
+      }
+    }
+
+    function drawPlus(x, y) {
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y);
+      ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 5);
+      ctx.stroke();
+    }
+
+    function drawMinus(x, y) {
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y);
+      ctx.stroke();
+    }
+
+    let dragOffsetX = 0, dragOffsetY = 0;
+
+    function handleStart(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = clientX - rect.left;
+      const my = clientY - rect.top;
+      const dist = Math.hypot(mx - balloon.x, my - balloon.y);
+
+      if (dist < balloon.r) {
+        balloon.isDragging = true;
+        dragOffsetX = mx - balloon.x;
+        dragOffsetY = my - balloon.y;
+      }
+    }
+
+    function handleMove(clientX, clientY) {
+      if (!balloon.isDragging) return;
+      const rect = canvas.getBoundingClientRect();
+      balloon.x = clientX - rect.left - dragOffsetX;
+      balloon.y = clientY - rect.top - dragOffsetY;
+    }
+
+    function handleEnd() { balloon.isDragging = false; }
+
+    canvas.addEventListener('mousedown', (e) => handleStart(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', handleEnd);
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) handleStart(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    window.addEventListener('touchend', handleEnd);
+
+    function update() {
+      if (balloon.isDragging) {
+        sweater.charges.forEach(q => {
+          if (q.hasElectron) {
+            const dist = Math.hypot(balloon.x - q.x, balloon.y - q.y);
+            if (dist < balloon.r + 10) {
+              q.hasElectron = false;
+              balloon.negativeCharges++;
+            }
+          }
+        });
+      }
+
+      wall.charges.forEach(pair => {
+        const dist = Math.hypot(balloon.x - pair.baseX, balloon.y - pair.baseY);
+        if (dist < 200 && balloon.negativeCharges > 0) {
+          const angle = Math.atan2(pair.baseY - balloon.y, pair.baseX - balloon.x);
+          const pushForce = (1 - dist / 200) * 18 * (balloon.negativeCharges / 10);
+          pair.eX = pair.baseX + Math.cos(angle) * pushForce;
+          pair.eY = pair.baseY + Math.sin(angle) * pushForce;
+        } else {
+          pair.eX += (pair.baseX + 12 - pair.eX) * 0.1;
+          pair.eY += (pair.baseY - pair.eY) * 0.1;
+        }
+      });
+
+      if (!balloon.isDragging) {
+        let fx = 0, fy = 0;
+
+        const sweaterPositiveCount = sweater.charges.filter(q => !q.hasElectron).length;
+        if (sweaterPositiveCount > 0 && balloon.negativeCharges > 0) {
+          const sweaterCenterX = sweater.x + sweater.w / 2;
+          const sweaterCenterY = sweater.y + sweater.h / 2;
+          const dist = Math.hypot(sweaterCenterX - balloon.x, sweaterCenterY - balloon.y);
+          if (dist < 350) {
+            const force = (sweaterPositiveCount * balloon.negativeCharges) / (dist * 0.8);
+            fx += ((sweaterCenterX - balloon.x) / dist) * force;
+            fy += ((sweaterCenterY - balloon.y) / dist) * force;
+          }
+        }
+
+        if (balloon.negativeCharges > 0 && Math.abs(balloon.x - wall.x) < 220) {
+          const force = (balloon.negativeCharges * 1.5) / Math.max(30, (wall.x - balloon.x));
+          fx += force;
+        }
+
+        balloon.vx = (balloon.vx + fx) * 0.88;
+        balloon.vy = (balloon.vy + fy) * 0.88;
+        balloon.x += balloon.vx;
+        balloon.y += balloon.vy;
+
+        balloon.x = Math.max(balloon.r, Math.min(canvas.width - balloon.r - wall.w, balloon.x));
+        balloon.y = Math.max(balloon.r, Math.min(canvas.height - balloon.r, balloon.y));
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
+        ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
+      } else {
+        ctx.fillStyle = '#374151';
+        ctx.beginPath();
+        ctx.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 16);
+        ctx.fill();
+      }
+
+      sweater.charges.forEach(q => {
+        drawPlus(q.x, q.y);
+        if (q.hasElectron) drawMinus(q.x + 8, q.y);
+      });
+
+      ctx.fillStyle = '#4b5563';
+      ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Bức Tường', wall.x + 20, wall.y - 10);
+
+      wall.charges.forEach(pair => {
+        drawPlus(pair.pX, pair.pY);
+        drawMinus(pair.eX, pair.eY);
+      });
+
+      ctx.save();
+      if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
+        ctx.beginPath();
+        ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(balloonImg, balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
+      } else {
+        ctx.beginPath();
+        ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#f97316';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#fdba74';
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      for (let i = 0; i < balloon.negativeCharges; i++) {
+        const angle = (i / 15) * Math.PI * 2;
+        const rad = (i > 15 ? 0.6 : 0.3) * balloon.r;
+        const ex = balloon.x + Math.cos(angle) * rad;
+        const ey = balloon.y + Math.sin(angle) * rad;
+        drawMinus(ex, ey);
+      }
+
+      requestAnimationFrame(() => {
+        update();
+        render();
+      });
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', initCharges);
+    initCharges();
+    render();
+  </script>
+</body>
+</html>
