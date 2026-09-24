@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô Phỏng Tĩnh Điện</title>
+  <title>Mô Phỏng Tĩnh Điện: Áo Len & Bong Bóng</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -50,7 +50,7 @@
 
   <h1>Thí Nghiệm Tĩnh Điện (Electrostatics)</h1>
   <p class="desc">
-    Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> để xem lực hút tĩnh điện!
+    Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> hoặc <b>Áo len</b> để xem lực hút!
   </p>
 
   <canvas id="simCanvas" width="800" height="450"></canvas>
@@ -63,15 +63,19 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
 
+    // Nạp chính xác 2 tên ảnh từ GitHub
     const sweaterImg = new Image();
     const balloonImg = new Image();
+
     sweaterImg.src = './1790256541776.png';
     balloonImg.src = './1790256519761.png';
 
+    // Cấu hình đối tượng
     const sweater = { x: 70, y: 100, w: 180, h: 250, charges: [] };
     const wall = { x: 630, y: 50, w: 110, h: 350, charges: [] };
     const balloon = { x: 380, y: 200, r: 45, vx: 0, vy: 0, negativeCharges: 0, isDragging: false };
 
+    // Khởi tạo điện tích
     function initCharges() {
       sweater.charges = [];
       wall.charges = [];
@@ -80,8 +84,8 @@
       balloon.y = 200;
       balloon.vx = 0;
       balloon.vy = 0;
-      balloon.isDragging = false;
 
+      // Áo len chứa 20 cặp điện tích (+ -)
       for (let i = 0; i < 20; i++) {
         sweater.charges.push({
           x: sweater.x + 30 + Math.random() * (sweater.w - 60),
@@ -90,6 +94,7 @@
         });
       }
 
+      // Bức tường chứa lưới các cặp điện tích (+ -)
       for (let r = 0; r < 7; r++) {
         for (let c = 0; c < 3; c++) {
           wall.charges.push({
@@ -104,23 +109,26 @@
       }
     }
 
+    // Vẽ dấu cộng (+) MÀU ĐỎ TƯƠI ĐỂ KHÔNG TRÙNG MÀU BÓNG
     function drawPlus(x, y) {
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ff4d4d';
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
-      ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y);
-      ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 5);
+      ctx.moveTo(x - 6, y); ctx.lineTo(x + 6, y);
+      ctx.moveTo(x, y - 6); ctx.lineTo(x, y + 6);
       ctx.stroke();
     }
 
+    // Vẽ dấu trừ (-) MÀU XANH DƯƠNG
     function drawMinus(x, y) {
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
-      ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y);
+      ctx.moveTo(x - 6, y); ctx.lineTo(x + 6, y);
       ctx.stroke();
     }
 
+    // Tương tác kéo thả chuột / cảm ứng
     let dragOffsetX = 0, dragOffsetY = 0;
 
     function handleStart(clientX, clientY) {
@@ -131,10 +139,10 @@
 
       if (dist < balloon.r) {
         balloon.isDragging = true;
-        balloon.vx = 0;
-        balloon.vy = 0;
         dragOffsetX = mx - balloon.x;
         dragOffsetY = my - balloon.y;
+        balloon.vx = 0;
+        balloon.vy = 0;
       }
     }
 
@@ -159,13 +167,14 @@
     });
     window.addEventListener('touchend', handleEnd);
 
+    // Cập nhật mô phỏng vật lý ổn định
     function update() {
-      // 1. Cọ xát -> electron chuyển từ áo len sang bóng bay.
+      // 1. Cọ xát -> Nhận Electron khi tiếp xúc áo len
       if (balloon.isDragging) {
         sweater.charges.forEach(q => {
           if (q.hasElectron) {
             const dist = Math.hypot(balloon.x - q.x, balloon.y - q.y);
-            if (dist < balloon.r + 10) {
+            if (dist < balloon.r) {
               q.hasElectron = false;
               balloon.negativeCharges++;
             }
@@ -173,13 +182,13 @@
         });
       }
 
-      // 2. Phân cực tường: electron bị đẩy khỏi mặt tường gần bóng âm, ion dương lộ ra.
+      // 2. Phân cực điện tích bức tường
       wall.charges.forEach(pair => {
         const dist = Math.hypot(balloon.x - pair.baseX, balloon.y - pair.baseY);
-        if (dist < 200 && balloon.negativeCharges > 0) {
+        if (dist < 180 && balloon.negativeCharges > 0) {
           const angle = Math.atan2(pair.baseY - balloon.y, pair.baseX - balloon.x);
-          const pushForce = (1 - dist / 200) * 18 * (balloon.negativeCharges / 10);
-          pair.eX = pair.baseX + 12 + Math.cos(angle) * pushForce;
+          const pushForce = Math.min(16, (1 - dist / 180) * 14 * (balloon.negativeCharges / 8));
+          pair.eX = pair.baseX + Math.cos(angle) * pushForce;
           pair.eY = pair.baseY + Math.sin(angle) * pushForce;
         } else {
           pair.eX += (pair.baseX + 12 - pair.eX) * 0.1;
@@ -187,43 +196,62 @@
         }
       });
 
-      // 3. Lực giữa bóng âm và các điện tích dương của áo len + tường.
+      // 3. Chuẩn hóa chuyển động của bóng (Tránh bay lung tung)
       if (!balloon.isDragging) {
         let fx = 0, fy = 0;
 
-        const sweaterPositiveCount = sweater.charges.filter(q => !q.hasElectron).length;
-        if (sweaterPositiveCount > 0 && balloon.negativeCharges > 0) {
+        // --- Lực hút về Áo len (Tích điện dương) ---
+        const sweaterPositives = sweater.charges.filter(q => !q.hasElectron).length;
+        if (sweaterPositives > 0 && balloon.negativeCharges > 0) {
           const sweaterCenterX = sweater.x + sweater.w / 2;
           const sweaterCenterY = sweater.y + sweater.h / 2;
           const dist = Math.hypot(sweaterCenterX - balloon.x, sweaterCenterY - balloon.y);
-          if (dist > 0 && dist < 350) {
-            const force = (sweaterPositiveCount * balloon.negativeCharges) / (dist * 0.8);
-            fx += ((sweaterCenterX - balloon.x) / dist) * force;
-            fy += ((sweaterCenterY - balloon.y) / dist) * force;
+
+          // Chỉ tác dụng lực nếu bóng ở gần áo len (bán kính < 250px)
+          if (dist < 250) {
+            const pullStrength = 0.12 * (sweaterPositives / 10) * (balloon.negativeCharges / 10);
+            fx += ((sweaterCenterX - balloon.x) / dist) * pullStrength;
+            fy += ((sweaterCenterY - balloon.y) / dist) * pullStrength;
           }
         }
 
-        // Lực hút của tường do phân cực điện: mặt gần bóng âm là dương, do đó hút bóng lại.
-        if (balloon.negativeCharges > 0 && Math.abs(balloon.x - wall.x) < 220) {
-          const dist = Math.max(30, wall.x - balloon.x);
-          const force = (balloon.negativeCharges * 1.5) / dist;
-          fx += force;
+        // --- Lực hút về Bức tường (Do phân cực) ---
+        if (balloon.negativeCharges > 0) {
+          const distToWall = wall.x - (balloon.x + balloon.r);
+          // Chỉ hút khi bóng ở khá gần tường (< 150px)
+          if (distToWall > -20 && distToWall < 150) {
+            const wallPull = 0.2 * (balloon.negativeCharges / 10);
+            fx += wallPull;
+          }
         }
 
-        balloon.vx = (balloon.vx + fx) * 0.88;
-        balloon.vy = (balloon.vy + fy) * 0.88;
+        // Áp dụng gia tốc và Ma sát không khí (Giúp bóng dừng mịn màng)
+        balloon.vx = (balloon.vx + fx) * 0.82;
+        balloon.vy = (balloon.vy + fy) * 0.82;
+
+        // Khống chế vận tốc tối đa
+        const speed = Math.hypot(balloon.vx, balloon.vy);
+        const maxSpeed = 6;
+        if (speed > maxSpeed) {
+          balloon.vx = (balloon.vx / speed) * maxSpeed;
+          balloon.vy = (balloon.vy / speed) * maxSpeed;
+        }
+
+        // Cập nhật vị trí
         balloon.x += balloon.vx;
         balloon.y += balloon.vy;
 
-        balloon.x = Math.max(balloon.r, Math.min(canvas.width - balloon.r - wall.w, balloon.x));
+        // Giới hạn biên không cho bóng văng ra khỏi màn hình
+        balloon.x = Math.max(balloon.r, Math.min(wall.x - balloon.r, balloon.x));
         balloon.y = Math.max(balloon.r, Math.min(canvas.height - balloon.r, balloon.y));
       }
     }
 
+    // Vẽ đồ họa Canvas
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Áo len: dương ở vị trí mất electron.
+      // --- 1. VẼ ÁO LEN ---
       if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
         ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
       } else {
@@ -233,24 +261,26 @@
         ctx.fill();
       }
 
+      // Vẽ điện tích trên áo len
       sweater.charges.forEach(q => {
         drawPlus(q.x, q.y);
         if (q.hasElectron) drawMinus(q.x + 8, q.y);
       });
 
-      // Tường: phân cực, mặt gần bóng dương, mặt xa bóng âm.
+      // --- 2. VẼ BỨC TƯỜNG ---
       ctx.fillStyle = '#4b5563';
       ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
       ctx.fillStyle = '#9ca3af';
       ctx.font = '14px sans-serif';
       ctx.fillText('Bức Tường', wall.x + 20, wall.y - 10);
 
+      // Vẽ các cặp điện tích trên tường
       wall.charges.forEach(pair => {
         drawPlus(pair.pX, pair.pY);
         drawMinus(pair.eX, pair.eY);
       });
 
-      // Bóng bay: nếu tích điện âm thì chỉ hiển thị electron, không có dấu "+" trên bóng.
+      // --- 3. VẼ BONG BÓNG ---
       ctx.save();
       if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
         ctx.beginPath();
@@ -268,9 +298,10 @@
       }
       ctx.restore();
 
+      // Vẽ Electron bám trên quả bóng
       for (let i = 0; i < balloon.negativeCharges; i++) {
         const angle = (i / 15) * Math.PI * 2;
-        const rad = (i > 15 ? 0.6 : 0.3) * balloon.r;
+        const rad = (i > 15 ? 0.6 : 0.35) * balloon.r;
         const ex = balloon.x + Math.cos(angle) * rad;
         const ey = balloon.y + Math.sin(angle) * rad;
         drawMinus(ex, ey);
@@ -283,6 +314,7 @@
     }
 
     document.getElementById('resetBtn').addEventListener('click', initCharges);
+
     initCharges();
     render();
   </script>
