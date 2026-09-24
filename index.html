@@ -16,81 +16,26 @@
       min-height: 100vh;
       padding: 22px;
     }
-    h1 {
-      margin-bottom: 10px;
-      font-size: clamp(24px, 2vw, 32px);
-      color: #f9fafb;
-      letter-spacing: 0.03em;
-      text-shadow: 0 0 18px rgba(59,130,246,0.25);
-    }
-    p.desc {
-      margin-bottom: 18px;
-      font-size: 14px;
-      color: #cbd5e1;
-      text-align: center;
-      max-width: 720px;
-      line-height: 1.6;
-    }
-    .sim-shell {
-      position: relative;
-      padding: 12px;
-      border-radius: 18px;
-      background: linear-gradient(145deg, rgba(148,163,184,0.12), rgba(15,23,42,0.8));
-      box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08);
-    }
-    canvas {
-      display: block;
-      width: min(86vw, 800px);
-      height: auto;
-      background: linear-gradient(180deg, rgba(17,24,39,0.96), rgba(15,23,42,0.95));
-      border-radius: 12px;
-      cursor: grab;
-      touch-action: none;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(59,130,246,0.18);
-    }
+    h1 { margin-bottom: 10px; font-size: clamp(24px, 2vw, 32px); color: #f9fafb; letter-spacing: 0.03em; text-shadow: 0 0 18px rgba(59,130,246,0.25); }
+    p.desc { margin-bottom: 18px; font-size: 14px; color: #cbd5e1; text-align: center; max-width: 720px; line-height: 1.6; }
+    .sim-shell { position: relative; padding: 12px; border-radius: 18px; background: linear-gradient(145deg, rgba(148,163,184,0.12), rgba(15,23,42,0.8)); box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08); }
+    canvas { display: block; width: min(86vw, 800px); height: auto; background: linear-gradient(180deg, rgba(17,24,39,0.96), rgba(15,23,42,0.95)); border-radius: 12px; cursor: grab; touch-action: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(59,130,246,0.18); }
     canvas:active { cursor: grabbing; }
-    .controls {
-      margin-top: 15px;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-    }
-    button.action-btn {
-      background: linear-gradient(180deg, #60a5fa, #2563eb);
-      color: #ffffff;
-      border: none;
-      padding: 10px 20px;
-      font-weight: 700;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-      box-shadow: 0 8px 18px rgba(37,99,235,0.35);
-    }
-    button.action-btn:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.04);
-    }
+    .controls { margin-top: 15px; display: flex; justify-content: center; gap: 12px; }
+    button.action-btn { background: linear-gradient(180deg, #60a5fa, #2563eb); color: #ffffff; border: none; padding: 10px 20px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease; box-shadow: 0 8px 18px rgba(37,99,235,0.35); }
+    button.action-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
     button.action-btn:active { transform: translateY(0); }
   </style>
 </head>
 <body>
   <h1>Thí Nghiệm Tĩnh Điện (Electrostatics)</h1>
-  <p class="desc">
-    Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> để xem lực hút tĩnh điện!
-  </p>
-
-  <div class="sim-shell">
-    <canvas id="simCanvas" width="800" height="450"></canvas>
-  </div>
-
-  <div class="controls">
-    <button class="action-btn" id="resetBtn">Đặt Lại Thí Nghiệm</button>
-  </div>
+  <p class="desc">Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> để xem lực hút tĩnh điện!</p>
+  <div class="sim-shell"><canvas id="simCanvas" width="800" height="450"></canvas></div>
+  <div class="controls"><button class="action-btn" id="resetBtn">Đặt Lại Thí Nghiệm</button></div>
 
   <script>
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
-
     const sweaterImg = new Image();
     const balloonImg = new Image();
     sweaterImg.src = './1790256541776.png';
@@ -105,29 +50,22 @@
       sweater.charges = [];
       wall.charges = [];
       Object.assign(balloon, { x: 380, y: 200, vx: 0, vy: 0, negativeCharges: 0, isDragging: false });
-
       for (let i = 0; i < 20; i++) {
-        sweater.charges.push({
-          x: sweater.x + 30 + Math.random() * (sweater.w - 60),
-          y: sweater.y + 30 + Math.random() * (sweater.h - 60),
-          hasElectron: true
-        });
+        sweater.charges.push({ x: sweater.x + 30 + Math.random() * (sweater.w - 60), y: sweater.y + 30 + Math.random() * (sweater.h - 60), hasElectron: true });
       }
-
-      for (let r = 0; r < 7; r++) {
-        for (let c = 0; c < 3; c++) {
-          const x = wall.x + 20 + c * 35;
-          const y = wall.y + 30 + r * 45;
-          wall.charges.push({ baseX: x, baseY: y, pX: x, pY: y, eX: x + 12, eY: y });
-        }
+      for (let r = 0; r < 7; r++) for (let c = 0; c < 3; c++) {
+        const x = wall.x + 20 + c * 35;
+        const y = wall.y + 30 + r * 45;
+        wall.charges.push({ baseX: x, baseY: y, pX: x, pY: y, eX: x + 12, eY: y });
       }
     }
 
+    // Dấu cộng màu vàng để tách khỏi màu cam của bong bóng.
     function drawPlus(x, y, scale = 1) {
-      ctx.strokeStyle = '#f87171';
+      ctx.strokeStyle = '#fde047';
       ctx.lineWidth = 3 * scale;
       ctx.shadowBlur = 12;
-      ctx.shadowColor = 'rgba(248,113,113,0.8)';
+      ctx.shadowColor = 'rgba(253,224,71,0.95)';
       ctx.beginPath();
       ctx.moveTo(x - 5 * scale, y); ctx.lineTo(x + 5 * scale, y);
       ctx.moveTo(x, y - 5 * scale); ctx.lineTo(x, y + 5 * scale);
@@ -147,38 +85,24 @@
     }
 
     let dragOffsetX = 0, dragOffsetY = 0;
-
     function canvasPoint(clientX, clientY) {
       const rect = canvas.getBoundingClientRect();
-      return {
-        x: (clientX - rect.left) * canvas.width / rect.width,
-        y: (clientY - rect.top) * canvas.height / rect.height
-      };
+      return { x: (clientX - rect.left) * canvas.width / rect.width, y: (clientY - rect.top) * canvas.height / rect.height };
     }
-
     function handleStart(clientX, clientY) {
       const p = canvasPoint(clientX, clientY);
       if (Math.hypot(p.x - balloon.x, p.y - balloon.y) <= balloon.r) {
-        balloon.isDragging = true;
-        balloon.vx = 0;
-        balloon.vy = 0;
-        dragOffsetX = p.x - balloon.x;
-        dragOffsetY = p.y - balloon.y;
+        balloon.isDragging = true; balloon.vx = 0; balloon.vy = 0;
+        dragOffsetX = p.x - balloon.x; dragOffsetY = p.y - balloon.y;
       }
     }
-
     function handleMove(clientX, clientY) {
       if (!balloon.isDragging) return;
       const p = canvasPoint(clientX, clientY);
-      balloon.x = p.x - dragOffsetX;
-      balloon.y = p.y - dragOffsetY;
+      balloon.x = p.x - dragOffsetX; balloon.y = p.y - dragOffsetY;
       keepBalloonInBounds();
     }
-
-    function handleEnd() {
-      balloon.isDragging = false;
-    }
-
+    function handleEnd() { balloon.isDragging = false; }
     canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
     window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
     window.addEventListener('mouseup', handleEnd);
@@ -190,28 +114,20 @@
       balloon.x = Math.max(balloon.r, Math.min(wall.x - balloon.r, balloon.x));
       balloon.y = Math.max(balloon.r, Math.min(canvas.height - balloon.r, balloon.y));
     }
-
     function updatePolarization() {
       wall.charges.forEach(pair => {
-        const dx = pair.baseX - balloon.x;
-        const dy = pair.baseY - balloon.y;
-        const dist = Math.hypot(dx, dy);
-        const targetElectronX = pair.baseX + 12;
-        const targetElectronY = pair.baseY;
-
+        const dx = pair.baseX - balloon.x, dy = pair.baseY - balloon.y, dist = Math.hypot(dx, dy);
         if (balloon.negativeCharges > 0 && dist < PHYSICS.polarizationDistance) {
           const amount = (1 - dist / PHYSICS.polarizationDistance) * Math.min(18, 4 + balloon.negativeCharges * 0.8);
-          const nx = dist ? dx / dist : 1;
-          const ny = dist ? dy / dist : 0;
+          const nx = dist ? dx / dist : 1, ny = dist ? dy / dist : 0;
           pair.eX = pair.baseX + 12 + nx * amount;
           pair.eY = pair.baseY + ny * amount;
         } else {
-          pair.eX += (targetElectronX - pair.eX) * 0.12;
-          pair.eY += (targetElectronY - pair.eY) * 0.12;
+          pair.eX += (pair.baseX + 12 - pair.eX) * 0.12;
+          pair.eY += (pair.baseY - pair.eY) * 0.12;
         }
       });
     }
-
     function update() {
       if (balloon.isDragging) {
         sweater.charges.forEach(q => {
@@ -221,164 +137,73 @@
           }
         });
       }
-
       updatePolarization();
-
       if (!balloon.isDragging && balloon.negativeCharges > 0) {
         let fx = 0, fy = 0;
-
         sweater.charges.forEach(q => {
           if (!q.hasElectron) {
-            const dx = q.x - balloon.x;
-            const dy = q.y - balloon.y;
-            const d2 = dx * dx + dy * dy;
-            const d = Math.sqrt(d2) || 1;
+            const dx = q.x - balloon.x, dy = q.y - balloon.y, d = Math.hypot(dx, dy) || 1;
             if (d < 360) {
               const force = Math.min(0.12, 0.018 / Math.max(0.25, d / 100));
-              fx += dx / d * force;
-              fy += dy / d * force;
+              fx += dx / d * force; fy += dy / d * force;
             }
           }
         });
-
-        const targetX = wall.x - balloon.r;
-        const gap = targetX - balloon.x;
-        if (gap > 0 && gap < 260) {
-          const force = Math.min(0.28, (balloon.negativeCharges * 0.012) / Math.max(25, gap));
-          fx += force * 18;
-        }
-
+        const targetX = wall.x - balloon.r, gap = targetX - balloon.x;
+        if (gap > 0 && gap < 260) fx += Math.min(0.28, (balloon.negativeCharges * 0.012) / Math.max(25, gap)) * 18;
         balloon.vx = Math.max(-PHYSICS.maxSpeed, Math.min(PHYSICS.maxSpeed, (balloon.vx + fx) * PHYSICS.damping));
         balloon.vy = Math.max(-PHYSICS.maxSpeed, Math.min(PHYSICS.maxSpeed, (balloon.vy + fy) * PHYSICS.damping));
-        balloon.x += balloon.vx;
-        balloon.y += balloon.vy;
-
+        balloon.x += balloon.vx; balloon.y += balloon.vy;
         keepBalloonInBounds();
-        if (balloon.x >= targetX - 1) {
-          balloon.x = targetX;
-          balloon.vx = 0;
-        }
+        if (balloon.x >= targetX - 1) { balloon.x = targetX; balloon.vx = 0; }
       }
     }
 
     function drawBackground() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // nền lưới mờ
       ctx.strokeStyle = 'rgba(148,163,184,0.08)';
       ctx.lineWidth = 1;
-      for (let x = 0; x < canvas.width; x += 32) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < canvas.height; y += 32) {
-        ctx.beginPath();
-        ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
+      for (let x = 0; x < canvas.width; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+      for (let y = 0; y < canvas.height; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
     }
-
     function drawSweater() {
       if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
-        ctx.save();
-        ctx.shadowColor = 'rgba(59,130,246,0.18)';
-        ctx.shadowBlur = 18;
-        ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
-        ctx.restore();
+        ctx.save(); ctx.shadowColor = 'rgba(59,130,246,0.18)'; ctx.shadowBlur = 18;
+        ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h); ctx.restore();
       } else {
-        ctx.fillStyle = '#374151';
-        ctx.beginPath();
-        ctx.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 16);
-        ctx.shadowColor = 'rgba(96,165,250,0.22)';
-        ctx.shadowBlur = 20;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#374151'; ctx.beginPath(); ctx.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 16); ctx.shadowColor = 'rgba(96,165,250,0.22)'; ctx.shadowBlur = 20; ctx.fill(); ctx.shadowBlur = 0;
       }
-
-      sweater.charges.forEach(q => {
-        drawPlus(q.x, q.y, 1.2);
-        if (q.hasElectron) drawMinus(q.x + 8, q.y, 1.2);
-      });
+      sweater.charges.forEach(q => { drawPlus(q.x, q.y, 1.2); if (q.hasElectron) drawMinus(q.x + 8, q.y, 1.2); });
     }
-
     function drawWall() {
       const wallGradient = ctx.createLinearGradient(wall.x, wall.y, wall.x + wall.w, wall.y + wall.h);
-      wallGradient.addColorStop(0, '#6b7280');
-      wallGradient.addColorStop(1, '#374151');
-      ctx.fillStyle = wallGradient;
-      ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.fillRect(wall.x + 10, wall.y + 12, wall.w - 20, wall.h - 24);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '14px sans-serif';
-      ctx.fillText('Bức Tường', wall.x + 18, wall.y - 12);
-
-      wall.charges.forEach(pair => {
-        drawPlus(pair.pX, pair.pY, 1.1);
-        drawMinus(pair.eX, pair.eY, 1.1);
-      });
+      wallGradient.addColorStop(0, '#6b7280'); wallGradient.addColorStop(1, '#374151');
+      ctx.fillStyle = wallGradient; ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(wall.x + 10, wall.y + 12, wall.w - 20, wall.h - 24);
+      ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif'; ctx.fillText('Bức Tường', wall.x + 18, wall.y - 12);
+      wall.charges.forEach(pair => { drawPlus(pair.pX, pair.pY, 1.1); drawMinus(pair.eX, pair.eY, 1.1); });
     }
-
     function drawBalloon() {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
-      ctx.clip();
-
-      if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
-        ctx.drawImage(balloonImg, balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
-      } else {
+      ctx.save(); ctx.beginPath(); ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2); ctx.clip();
+      if (balloonImg.complete && balloonImg.naturalWidth !== 0) ctx.drawImage(balloonImg, balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
+      else {
         const grad = ctx.createRadialGradient(balloon.x - 10, balloon.y - 12, 8, balloon.x, balloon.y, balloon.r * 1.2);
-        grad.addColorStop(0, '#fef3c7');
-        grad.addColorStop(0.4, '#f59e0b');
-        grad.addColorStop(1, '#ea580c');
-        ctx.fillStyle = grad;
-        ctx.fillRect(balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
+        grad.addColorStop(0, '#fef3c7'); grad.addColorStop(0.4, '#f59e0b'); grad.addColorStop(1, '#ea580c');
+        ctx.fillStyle = grad; ctx.fillRect(balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
       }
-
       ctx.restore();
-
-      ctx.beginPath();
-      ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = 'rgba(59,130,246,0.4)';
-      ctx.shadowBlur = 16;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      for (let i = 0; i < balloon.negativeCharges; i++) {
-        const angle = (i / 15) * Math.PI * 2;
-        const rad = (i > 15 ? 0.6 : 0.3) * balloon.r;
-        drawMinus(balloon.x + Math.cos(angle) * rad, balloon.y + Math.sin(angle) * rad, 1.1);
-      }
+      ctx.beginPath(); ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.shadowColor = 'rgba(59,130,246,0.4)'; ctx.shadowBlur = 16; ctx.stroke(); ctx.shadowBlur = 0;
+      for (let i = 0; i < balloon.negativeCharges; i++) { const angle = (i / 15) * Math.PI * 2, rad = (i > 15 ? 0.6 : 0.3) * balloon.r; drawMinus(balloon.x + Math.cos(angle) * rad, balloon.y + Math.sin(angle) * rad, 1.1); }
     }
-
     function render() {
-      drawBackground();
-      drawSweater();
-      drawWall();
-      drawBalloon();
-
-      // Nhãn số electron dưới bong bóng
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-      ctx.fillRect(20, 18, 150, 32);
-      ctx.strokeStyle = 'rgba(96,165,250,0.5)';
-      ctx.strokeRect(20, 18, 150, 32);
-      ctx.fillStyle = '#dbeafe';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText(`Electron: ${balloon.negativeCharges}`, 32, 40);
-
-      requestAnimationFrame(() => {
-        update();
-        render();
-      });
+      drawBackground(); drawSweater(); drawWall(); drawBalloon();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.7)'; ctx.fillRect(20, 18, 290, 54); ctx.strokeStyle = 'rgba(96,165,250,0.5)'; ctx.strokeRect(20, 18, 290, 54);
+      ctx.fillStyle = '#dbeafe'; ctx.font = 'bold 14px sans-serif'; ctx.fillText(`Electron dư trên bóng: ${balloon.negativeCharges}`, 32, 40);
+      ctx.font = '12px sans-serif'; ctx.fillStyle = '#fde68a'; ctx.fillText('+: ion dương cố định', 32, 59); ctx.fillStyle = '#93c5fd'; ctx.fillText('−: electron', 182, 59);
+      requestAnimationFrame(() => { update(); render(); });
     }
-
     document.getElementById('resetBtn').addEventListener('click', initCharges);
-    initCharges();
-    render();
+    initCharges(); render();
   </script>
 </body>
 </html>
