@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bộ Thí Nghiệm Vật Lý 12 - Tổng Hợp</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts: Playfair Display & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f5f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      margin: 0;
+      padding: 16px;
+    }
+    .font-serif-title {
+      font-family: 'Playfair Display', serif;
+    }
+    
+    /* Hiệu ứng bong bóng khí khi sôi */
+    @keyframes bubble {
+      0% { transform: translateY(0) scale(0.5); opacity: 0; }
+      50% { opacity: 0.9; }
+      100% { transform: translateY(-70px) scale(1.3); opacity: 0; }
+    }
+    .bubble { animation: bubble 1.1s infinite ease-in; }
+    
+    /* Hiệu ứng khói/hơi nước */
+    @keyframes steam {
+      0% { transform: translateY(0) scale(1); opacity: 0.5; }
+      100% { transform: translateY(-35px) scale(1.8); opacity: 0; }
+    }
+    .steam { animation: steam 1.6s infinite linear; }
+    
+    /* Hiệu ứng ngọn lửa bếp đun */
+    @keyframes flicker {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.12); opacity: 1; }
+    }
+    .flame { animation: flicker 0.2s infinite alternate; }
+
+    /* Hiệu ứng hồng kim loại khi nhiệt độ cao */
+    @keyframes metalGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); }
+      50% { box-shadow: 0 0 25px rgba(249, 115, 22, 0.9); }
+    }
+    .glow-metal { animation: metalGlow 1.5s infinite alternate; }
+
+    /* TAB NAVIGATION STYLES */
+    .tab-btn {
+      padding: 10px 20px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      border-radius: 8px 8px 0 0;
+      background-color: #e5e7eb;
+      color: #4b5563;
+      border: 1px solid #d1d5db;
+      border-bottom: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background-color: #ffffff;
+      color: #dc2626;
+      border-color: #d1d5db;
+      border-bottom: 2px solid #ffffff;
+      margin-bottom: -1px;
+    }
+
+    /* TĨNH ĐIỆN STYLES */
+    .static-canvas-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    #simCanvas {
+      background: #1f2937;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      cursor: grab;
+      touch-action: none;
+      max-width: 100%;
+      height: auto;
+    }
+    #simCanvas:active { cursor: grabbing; }
+
+    /* FARADAY STYLES */
+    :root {
+      --ink: #17212b;
+      --muted: #68747b;
+      --cream: #f4efe6;
+      --paper: #fffdf7;
+      --red: #d9413c;
+      --red-dark: #a82a31;
+      --copper: #b56a3b;
+      --teal: #177e89;
+      --line: #d8d0c3;
+      --glow: #ffd86a;
+    }
+
+    .faraday-app { width: 100%; margin: 0 auto; }
+    .faraday-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 10px 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .faraday-eyebrow {
+      margin: 0 0 10px;
+      color: var(--red-dark);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+    }
+    .faraday-status {
+      min-width: 190px;
+      padding: 12px 15px;
+      border-left: 3px solid var(--teal);
+      background: rgba(255, 253, 247, 0.72);
+    }
+    .faraday-status small { display: block; margin-bottom: 4px; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .faraday-status strong { font-size: 1.05rem; }
+
+    .faraday-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 26px; margin-top: 20px; }
+    .faraday-experiment {
+      min-width: 0;
+      padding: clamp(16px, 3vw, 32px);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: 0 20px 48px rgba(60, 50, 39, 0.08);
+      border-radius: 12px;
+    }
+    .faraday-experiment-head { display: flex; justify-content: space-between; gap: 20px; align-items: start; }
+    .faraday-score { color: var(--red-dark); font-weight: 800; white-space: nowrap; }
+
+    .faraday-lab {
+      position: relative;
+      height: 390px;
+      margin-top: 20px;
+      overflow: hidden;
+      border: 1px solid #e5ddcf;
+      border-radius: 8px;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px), #050505;
+      background-size: 28px 28px;
+      touch-action: none;
+    }
+
+    .faraday-coil {
+      position: absolute;
+      z-index: 3;
+      top: 50%;
+      left: 50%;
+      width: 270px;
+      height: 230px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .faraday-coil-loop {
+      position: absolute;
+      top: 0;
+      width: 42px;
+      height: 230px;
+      border: 6px solid var(--copper);
+      border-radius: 50%;
+      box-shadow: 2px 0 0 rgba(93, 54, 31, 0.18), inset 2px 0 0 rgba(255, 220, 165, 0.45);
+    }
+    .faraday-coil-label {
+      position: absolute;
+      top: calc(50% + 120px);
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--copper);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .faraday-magnet {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 4%;
+      display: flex;
+      width: 235px;
+      height: 82px;
+      cursor: grab;
+      user-select: none;
+      border: 3px solid var(--ink);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 12px 20px rgba(23, 33, 43, 0.2);
+      touch-action: none;
+    }
+    .faraday-magnet:active { cursor: grabbing; }
+    .faraday-pole { display: grid; flex: 1; place-items: center; font-size: 1.55rem; font-weight: 900; }
+    .faraday-north { color: #fff; background: var(--red); }
+    .faraday-south { color: var(--ink); background: #fffdf7; }
+
+    .faraday-compass-grid {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-auto-rows: 1fr;
+      padding: 14px;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .faraday-bg-compass {
+      position: relative;
+      display: grid;
+      width: 24px;
+      height: 24px;
+      place-self: center;
+      border: 1px solid rgba(255, 255, 255, 0.62);
+      border-radius: 50%;
+      background: rgba(15, 21, 25, 0.7);
+      box-shadow: 0 0 0 2px rgba(23, 126, 137, 0.1);
+    }
+    .faraday-bg-compass::before, .faraday-bg-compass::after {
+      position: absolute;
+      content: '';
+      background: rgba(255, 255, 255, 0.28);
+    }
+    .faraday-bg-compass::before { top: 3px; bottom: 3px; left: 50%; width: 1px; }
+    .faraday-bg-compass::after { top: 50%; right: 3px; left: 3px; height: 1px; }
+    .faraday-bg-needle {
+      width: 18px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--red) 0 50%, #fffdf7 50% 100%);
+      transform: rotate(-25deg);
+    }
+
+    .faraday-meter {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 145px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 247, 0.9);
+      border-radius: 6px;
+    }
+    .faraday-meter-label { display: flex; justify-content: space-between; margin-bottom: 12px; color: var(--muted); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
+    .faraday-meter-face { position: relative; height: 62px; overflow: hidden; border: 2px solid var(--ink); border-radius: 75px 75px 0 0; background: #f3eee2; }
+    .faraday-meter-face::after { position: absolute; right: 50%; bottom: 0; width: 2px; height: 90%; content: ''; background: var(--red-dark); transform-origin: bottom; transform: rotate(var(--needle-turn, 0deg)); transition: transform 80ms linear; }
+    .faraday-meter-center { position: absolute; right: 50%; bottom: 5px; z-index: 1; width: 9px; height: 9px; border-radius: 50%; background: var(--ink); transform: translateX(50%); }
+    .faraday-meter-value { margin: 9px 0 0; font-size: 1.1rem; font-weight: 900; text-align: center; }
+
+    .faraday-controls { display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; align-items: center; gap: 14px; margin-top: 22px; }
+    .faraday-progress-wrap { display: grid; gap: 8px; }
+    .faraday-progress-wrap label { color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .faraday-progress { height: 9px; overflow: hidden; background: #e9e0d1; border-radius: 4px; }
+    .faraday-progress span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--teal), var(--red)); transition: width 120ms ease; }
+    .faraday-speed-control, .faraday-turns-control { display: grid; gap: 8px; }
+    .faraday-speed-control label, .faraday-turns-control label { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .faraday-speed-control output, .faraday-turns-control output { color: var(--red-dark); }
+    .faraday-speed-control input, .faraday-turns-control input { width: 100%; accent-color: var(--red); cursor: pointer; }
+
+    .faraday-btn { border: 0; padding: 12px 15px; color: #fff; background: var(--ink); cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: 800; border-radius: 6px; }
+    .faraday-btn:hover { background: var(--red-dark); }
+    .faraday-btn.secondary { color: var(--ink); background: #e9e0d1; }
+
+    .faraday-aside { display: grid; align-content: start; gap: 14px; }
+    .faraday-panel { padding: 21px; border-top: 3px solid var(--red); background: rgba(255, 253, 247, 0.72); border-radius: 8px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .faraday-panel h3 { margin: 0 0 13px; font-family: Georgia, serif; font-size: 1.22rem; }
+    .faraday-panel p { margin-bottom: 0; color: var(--muted); font-size: 0.86rem; line-height: 1.65; }
+    .faraday-rule { display: flex; gap: 10px; align-items: start; margin: 13px 0 0; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+    .faraday-rule b { display: grid; flex: 0 0 22px; height: 22px; place-items: center; color: #fff; background: var(--red); font-size: 0.7rem; border-radius: 3px; }
+
+    .faraday-led { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border-radius: 50%; background: #c9c4b8; vertical-align: -1px; }
+    .faraday-led.on { background: var(--glow); box-shadow: 0 0 14px 5px rgba(255, 216, 106, 0.75); }
+
+    @media (max-width: 820px) {
+      .faraday-header { display: block; }
+      .faraday-status { width: fit-content; margin-top: 15px; }
+      .faraday-layout { grid-template-columns: 1fr; }
+      .faraday-aside { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 560px) {
+      .faraday-status { width: 100%; min-width: 0; margin-top: 14px; }
+      .faraday-layout { gap: 16px; margin-top: 16px; }
+      .faraday-experiment { padding: 16px; }
+      .faraday-experiment-head { display: block; }
+      .faraday-score { display: block; margin-top: 12px; }
+      .faraday-lab { height: 300px; margin-top: 16px; }
+      .faraday-magnet { width: 158px; height: 55px; }
+      .faraday-pole { font-size: 1.05rem; }
+      .faraday-coil { width: 220px; height: 190px; transform: translate(-50%, -50%); }
+      .faraday-coil-loop { width: 34px; height: 190px; border-width: 5px; }
+      .faraday-coil-label { top: calc(50% + 101px); font-size: 0.62rem; }
+      .faraday-meter { top: 10px; right: 10px; width: 122px; padding: 9px; }
+      .faraday-meter-label { margin-bottom: 8px; font-size: 0.58rem; }
+      .faraday-meter-face { height: 48px; }
+      .faraday-meter-value { margin-top: 6px; font-size: 0.92rem; }
+      .faraday-controls { grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+      .faraday-aside { grid-template-columns: 1fr; }
+      .faraday-panel { padding: 17px; }
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 md:p-8">
+
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- THANH DIEU HUONG TAB -->
+    <div class="flex border-b border-gray-300 mb-6 space-x-2 overflow-x-auto">
+      <button class="tab-btn active" onclick="openTab(event, 'tab-nhiet')">1. Thí Nghiệm Nhiệt Học</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-tinhdien')">2. Thí Nghiệm Tĩnh Điện</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-faraday')">3. Phòng Thí Nghiệm Faraday</button>
+    </div>
+
+    <!-- TAB 1: THI NGHIEM NHIET HOC (LAM CHUAN GIAO DIEN) -->
+    <div id="tab-nhiet" class="tab-content">
+      <!-- HEADER TRANG -->
+      <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 pb-5 border-b border-gray-300/80">
+          <div>
+              <div class="flex items-center gap-2 mb-2">
+                  <span class="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded">Vật lí 12 • Chương 1</span>
+                  <span class="text-sm text-gray-500 font-semibold">Vật lí nhiệt & Chuyển thể</span>
+              </div>
+              <h1 class="font-serif-title text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+                  thí nghiệm nhiệt học & chuyển thể.
+              </h1>
+              <p class="text-gray-600 text-sm sm:text-base font-medium mt-2 max-w-3xl leading-relaxed">
+                  Mô phỏng đun nóng các chất chuẩn SGK Vật lí 12. Quan sát sự thay đổi nhiệt độ, trạng thái và đường biểu diễn đồ thị nhiệt độ theo thời gian t°(t).
+              </p>
+          </div>
+          
+          <div class="mt-4 md:mt-0 border-l-4 border-red-600 pl-4 py-1.5 bg-white/70 rounded-r-md shadow-xs">
+              <span class="text-xs font-bold tracking-widest text-gray-400 uppercase block mb-0.5">TRẠNG THÁI MÔ PHỎNG</span>
+              <span id="statusHeader" class="font-bold text-gray-900 text-base sm:text-lg">Sẵn sàng đun nóng</span>
+          </div>
+      </header>
+
+      <!-- BỐ CỤC CHÍNH (MAIN LAYOUT) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          <!-- CỘT TRÁI: MÔ PHỎNG VÀ ĐỒ THỊ (8 COLS) -->
+          <main class="lg:col-span-8 flex flex-col gap-6">
+              
+              <div class="bg-white rounded-xl border border-gray-200/90 shadow-sm p-4 sm:p-6">
+                  
+                  <!-- READOUT DASHBOARD -->
+                  <div class="grid grid-cols-3 gap-3 mb-5 p-3.5 bg-gray-50 border border-gray-200/80 rounded-lg text-center">
+                      <div>
+                          <span class="text-xs sm:text-sm font-bold text-gray-500 uppercase block mb-1">Nhiệt độ (t°)</span>
+                          <span id="txtTemp" class="font-extrabold text-xl sm:text-3xl text-red-600 font-mono">-20.0 °C</span>
+                      </div>
+                      <div class="border-x border-gray-200">
+                          <span class="text-xs sm:text-sm font-bold text-gray-500 uppercase block mb-1">Thời gian (t)</span>
+                          <span id="txtTime" class="font-extrabold text-xl sm:text-3xl text-gray-900 font-mono">0.0 s</span>
+                      </div>
+                      <div>
+                          <span class="text-xs sm:text-sm font-bold text-gray-500 uppercase block mb-1">Nhiệt lượng cấp (Q)</span>
+                          <span id="txtHeat" class="font-extrabold text-xl sm:text-3xl text-amber-600 font-mono">0.0 kJ</span>
+                      </div>
+                  </div>
+
+                  <!-- KHUNG MÔ PHỎNG VISUAL ĐEN (#121212) -->
+                  <div class="bg-[#121212] rounded-xl p-4 sm:p-5 grid grid-cols-1 md:grid-cols-12 gap-5 items-center shadow-inner">
+                      
+                      <!-- Visual Container (5 Cols) -->
+                      <div class="md:col-span-5 relative h-64 bg-[#1a1a1a] rounded-lg border border-gray-800 flex items-end justify-center pb-8 overflow-hidden">
+                          
+                          <!-- Nhiệt kế Thủy ngân -->
+                          <div class="absolute left-3 bottom-6 w-4 h-48 bg-gray-800 rounded-full border border-gray-700 p-0.5 flex flex-col justify-end items-center">
+                              <div id="thermoFluid" class="w-full bg-red-500 rounded-full transition-all duration-100" style="height: 15%;"></div>
+                              <span id="thermoMax" class="absolute -right-8 top-0 text-[10px] text-gray-400 font-mono font-bold">120°</span>
+                              <span id="thermoMelt" class="absolute -right-8 top-1/2 -translate-y-1/2 text-[10px] text-amber-400 font-bold font-mono">0°</span>
+                              <span id="thermoMin" class="absolute -right-8 bottom-0 text-[10px] text-gray-400 font-mono font-bold">-30°</span>
+                          </div>
+
+                          <!-- VẬT CHỨA & CHẤT THÍ NGHIỆM -->
+                          <div id="beakerContainer" class="relative w-32 h-36 border-b-4 border-x-4 border-gray-300/40 rounded-b-xl bg-gray-900/30 overflow-hidden flex items-end justify-center">
+                              <div id="liquidFill" class="w-full bg-cyan-500/50 transition-all duration-200 relative overflow-hidden" style="height: 0%;">
+                                  <div id="bubblesContainer" class="hidden absolute inset-0">
+                                      <div class="bubble absolute bottom-1 left-2 w-2 h-2 bg-white/80 rounded-full"></div>
+                                      <div class="bubble absolute bottom-1 left-8 w-3 h-3 bg-white/80 rounded-full" style="animation-delay: 0.2s"></div>
+                                      <div class="bubble absolute bottom-1 left-16 w-2 h-2 bg-white/80 rounded-full" style="animation-delay: 0.5s"></div>
+                                      <div class="bubble absolute bottom-1 left-22 w-2.5 h-2.5 bg-white/80 rounded-full" style="animation-delay: 0.8s"></div>
+                                  </div>
+                              </div>
+
+                              <div id="iceContainer" class="absolute bottom-2 flex gap-1 items-center justify-center transition-all duration-300">
+                                  <div class="w-7 h-7 bg-cyan-100/90 border border-white/80 rounded shadow-inner"></div>
+                                  <div class="w-8 h-8 bg-cyan-50 border border-white/80 rounded shadow-inner"></div>
+                              </div>
+
+                              <div id="steamContainer" class="hidden absolute top-0 inset-x-0 flex justify-center gap-2">
+                                  <div class="steam w-3 h-8 bg-white/40 rounded-full blur-xs"></div>
+                                  <div class="steam w-4 h-10 bg-white/40 rounded-full blur-xs" style="animation-delay: 0.3s"></div>
+                              </div>
+                          </div>
+
+                          <div id="solidBlockContainer" class="hidden relative flex flex-col items-center justify-end mb-1">
+                              <div id="solidMeshBlock" class="w-24 h-20 rounded-md border-2 border-gray-400 bg-gray-600 transition-all duration-300 flex items-center justify-center shadow-lg">
+                                  <span id="txtBlockLabel" class="text-xs font-bold text-white uppercase tracking-wider font-mono">KIM LOẠI</span>
+                              </div>
+                          </div>
+
+                          <div class="absolute bottom-1 w-24 h-3 bg-gray-700 rounded-t flex justify-center items-center">
+                              <div id="flame" class="hidden flame w-16 h-3 bg-gradient-to-t from-red-600 via-amber-500 to-yellow-300 rounded-full"></div>
+                          </div>
+                      </div>
+
+                      <!-- Đồ thị Real-time Chart.js -->
+                      <div class="md:col-span-7 h-64 bg-[#1a1a1a] rounded-lg border border-gray-800 p-2 flex flex-col justify-between">
+                          <div class="flex justify-between items-center px-2 pt-1">
+                              <span class="text-xs font-bold text-gray-400 tracking-wider uppercase">ĐỒ THỊ NHIỆT ĐỘ t°(t)</span>
+                              <span id="txtSubstanceTag" class="text-xs font-bold text-red-400 bg-red-950/70 px-2.5 py-0.5 rounded border border-red-800/40">Nước đá (H₂O)</span>
+                          </div>
+                          <div class="relative flex-1 w-full h-full">
+                              <canvas id="tempChart"></canvas>
+                          </div>
+                      </div>
+
+                  </div>
+
+                  <!-- BẢNG ĐIỀU KHIỂN & THAM SỐ THÍ NGHIỆM -->
+                  <div class="mt-6 pt-5 border-t border-gray-200/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                      
+                      <div>
+                          <label class="block text-sm font-bold text-gray-800 mb-1.5">CHỌN CHẤT KHẢO SÁT</label>
+                          <select id="substanceSelect" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm rounded-lg p-2.5 font-bold focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                              <option value="water" selected>1. Nước đá (H₂O)</option>
+                              <option value="alcohol">2. Rượu (Ethanol)</option>
+                              <option value="copper">3. Đồng (Cu)</option>
+                              <option value="aluminum">4. Nhôm (Al)</option>
+                              <option value="lead">5. Chì (Pb)</option>
+                              <option value="iron">6. Sắt (Fe)</option>
+                              <option value="oil">7. Dầu ăn</option>
+                              <option value="glass">8. Thủy tinh (Vô định hình)</option>
+                          </select>
+                      </div>
+
+                      <div>
+                          <div class="flex justify-between text-sm font-bold text-gray-800 mb-1.5">
+                              <span>KHỐI LƯỢNG (m)</span>
+                              <span id="mVal" class="text-red-600 font-extrabold font-mono">0.5 kg</span>
+                          </div>
+                          <input type="range" id="mInput" min="0.1" max="2.0" step="0.1" value="0.5" class="w-full accent-red-600 cursor-pointer">
+                      </div>
+
+                      <div>
+                          <div class="flex justify-between text-sm font-bold text-gray-800 mb-1.5">
+                              <span>CÔNG SUẤT BẾP (P)</span>
+                              <span id="pVal" class="text-red-600 font-extrabold font-mono">1000 W</span>
+                          </div>
+                          <input type="range" id="pInput" min="200" max="3000" step="100" value="1000" class="w-full accent-red-600 cursor-pointer">
+                      </div>
+
+                      <div class="flex gap-2">
+                          <button id="btnStart" class="flex-1 bg-gray-900 hover:bg-black text-white text-xs sm:text-sm font-extrabold py-2.5 px-3 rounded-lg transition-all shadow-sm">
+                              Bắt đầu đun
+                          </button>
+                          <button id="btnReset" class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs sm:text-sm font-extrabold py-2.5 px-3 rounded-lg border border-gray-300 transition-all">
+                              Đặt lại
+                          </button>
+                      </div>
+
+                  </div>
+
+              </div>
+
+          </main>
+
+          <!-- CỘT PHẢI: LÝ THUYẾT ACCORDION & THÔNG SỐ (4 COLS) -->
+          <aside class="lg:col-span-4 flex flex-col gap-4">
+              
+              <div class="flex items-center justify-between px-1">
+                  <h2 class="font-serif-title text-2xl font-black text-gray-900">lý thuyết chương 1.</h2>
+                  <span class="text-xs font-bold bg-red-100 text-red-700 px-2.5 py-0.5 rounded">SGK Vật lí 12</span>
+              </div>
+
+              <!-- ACCORDION CONTAINER -->
+              <div class="space-y-3">
+                  
+                  <!-- ACCORDION 1: CÔNG THỨC NHIỆT LƯỢNG -->
+                  <div class="bg-white rounded-xl border border-gray-200/90 shadow-sm overflow-hidden">
+                      <button class="accordion-btn w-full p-4 text-left font-bold text-sm sm:text-base text-gray-900 flex justify-between items-center bg-gray-50/50 hover:bg-gray-100/80 transition-all">
+                          <span class="flex items-center gap-2">
+                              <span class="text-red-600 text-base">🧮</span>
+                              <span class="font-extrabold">Các Công Thức Trọng Tâm</span>
+                          </span>
+                          <span class="arrow transition-transform duration-200 text-gray-400 font-bold">▼</span>
+                      </button>
+                      <div class="accordion-content hidden p-4 border-t border-gray-200/80 space-y-3.5 text-xs sm:text-sm leading-relaxed">
+                          <div class="p-3 bg-red-50/50 border border-red-100 rounded-lg">
+                              <p class="font-bold text-gray-900 text-sm sm:text-base mb-1">1. Nhiệt lượng biến thiên nhiệt độ:</p>
+                              <p class="text-red-600 font-mono font-extrabold text-base sm:text-lg mb-1">Q = m · c · Δt</p>
+                              <p class="text-gray-600 text-xs sm:text-sm">• <b>c</b>: Nhiệt dung riêng của chất (J/kg.K)</p>
+                              <p class="text-gray-600 text-xs sm:text-sm">• <b>Δt</b>: Độ biến thiên nhiệt độ (°C)</p>
+                          </div>
+
+                          <div class="p-3 bg-amber-50/50 border border-amber-100 rounded-lg">
+                              <p class="font-bold text-gray-900 text-sm sm:text-base mb-1">2. Nhiệt nóng chảy riêng:</p>
+                              <p class="text-amber-700 font-mono font-extrabold text-base sm:text-lg mb-1">Q = λ · m</p>
+                              <p class="text-gray-600 text-xs sm:text-sm">• <b>λ</b>: Nhiệt nóng chảy riêng (J/kg)</p>
+                          </div>
+
+                          <div class="p-3 bg-cyan-50/50 border border-cyan-100 rounded-lg">
+                              <p class="font-bold text-gray-900 text-sm sm:text-base mb-1">3. Nhiệt hóa hơi riêng:</p>
+                              <p class="text-cyan-700 font-mono font-extrabold text-base sm:text-lg mb-1">Q = L · m</p>
+                              <p class="text-gray-600 text-xs sm:text-sm">• <b>L</b>: Nhiệt hóa hơi riêng (J/kg)</p>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- ACCORDION 2: THUYẾT ĐỘNG HỌC PHÂN TỬ -->
+                  <div class="bg-white rounded-xl border border-gray-200/90 shadow-sm overflow-hidden">
+                      <button class="accordion-btn w-full p-4 text-left font-bold text-sm sm:text-base text-gray-900 flex justify-between items-center bg-gray-50/50 hover:bg-gray-100/80 transition-all">
+                          <span class="flex items-center gap-2">
+                              <span class="text-red-600 text-base">⚛️</span>
+                              <span class="font-extrabold">Thuyết Động Học Phân Tử</span>
+                          </span>
+                          <span class="arrow transition-transform duration-200 text-gray-400 font-bold">▼</span>
+                      </button>
+                      <div class="accordion-content hidden p-4 border-t border-gray-200/80 space-y-3 text-xs sm:text-sm text-gray-700 leading-relaxed">
+                          <p class="font-bold text-gray-900 text-sm sm:text-base">Cấu trúc 3 thể của vật chất:</p>
+                          <ul class="list-disc pl-5 space-y-2 text-xs sm:text-sm">
+                              <li><b>Thể Rắn:</b> Lực liên kết phân tử <i>rất mạnh</i>. Các phân tử chỉ dao động quanh vị trí cân bằng cố định.</li>
+                              <li><b>Thể Lỏng:</b> Lực liên kết <i>yếu hơn</i> thể rắn. Phân tử dao động quanh vị trí cân bằng di động.</li>
+                              <li><b>Thể Khí:</b> Lực liên kết <i>rất yếu</i>. Các phân tử chuyển động hỗn loạn không ngừng.</li>
+                          </ul>
+                      </div>
+                  </div>
+
+                  <!-- ACCORDION 3: CHẤT RẮN KẾT TINH VS VÔ ĐỊNH HÌNH -->
+                  <div class="bg-white rounded-xl border border-gray-200/90 shadow-sm overflow-hidden">
+                      <button class="accordion-btn w-full p-4 text-left font-bold text-sm sm:text-base text-gray-900 flex justify-between items-center bg-gray-50/50 hover:bg-gray-100/80 transition-all">
+                          <span class="flex items-center gap-2">
+                              <span class="text-red-600 text-base">💎</span>
+                              <span class="font-extrabold">Chất Rắn Kết Tinh & Vô Định Hình</span>
+                          </span>
+                          <span class="arrow transition-transform duration-200 text-gray-400 font-bold">▼</span>
+                      </button>
+                      <div class="accordion-content hidden p-4 border-t border-gray-200/80 space-y-3 text-xs sm:text-sm text-gray-700 leading-relaxed">
+                          <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                              <p class="font-extrabold text-gray-900 text-xs sm:text-sm">• Chất rắn kết tinh (Đồng, Chì, Đá...):</p>
+                              <p class="text-xs sm:text-sm text-gray-600 mt-1 leading-normal">Có cấu trúc tinh thể xác định. Có <b>Nhiệt độ nóng chảy (t°<sub>nc</sub>) xác định</b> (đồ thị có đoạn nằm ngang).</p>
+                          </div>
+                          <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                              <p class="font-extrabold text-gray-900 text-xs sm:text-sm">• Chất rắn vô định hình (Thủy tinh):</p>
+                              <p class="text-xs sm:text-sm text-gray-600 mt-1 leading-normal">Không có cấu trúc tinh thể. <b>Không có nhiệt độ nóng chảy xác định</b>, mềm dần khi đun nóng (đồ thị tăng liên tục).</p>
+                          </div>
+                      </div>
+                  </div>
+
+              </div>
+
+              <!-- CARD TRA CỨU HẰNG SỐ VẬT LÍ -->
+              <div class="bg-white rounded-xl border border-gray-200/90 shadow-sm p-4 mt-2">
+                  <h3 class="font-serif-title text-base sm:text-lg font-bold text-gray-900 mb-2.5 flex items-center justify-between">
+                      <span>Bảng Hằng Số Hiện Tại</span>
+                      <span class="text-xs font-bold text-gray-400 uppercase font-mono">SPECS</span>
+                  </h3>
+                  <div id="substanceSpecs" class="text-xs sm:text-sm text-gray-700 space-y-2 font-mono">
+                      <!-- Đổ dữ liệu động JS -->
+                  </div>
+              </div>
+
+          </aside>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: THI NGHIEM TINH DIEN -->
+    <div id="tab-tinhdien" class="tab-content hidden">
+      <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 pb-5 border-b border-gray-300/80">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded">Vật lí 11 • Tĩnh điện</span>
+            <span class="text-sm text-gray-500 font-semibold">Tương tác điện tích</span>
+          </div>
+          <h1 class="font-serif-title text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+            thí nghiệm tĩnh điện.
+          </h1>
+          <p class="text-gray-600 text-sm sm:text-base font-medium mt-2 max-w-3xl leading-relaxed">
+            Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> hoặc <b>Áo len</b> để xem lực hút!
+          </p>
+        </div>
+      </header>
+
+      <div class="bg-white rounded-xl border border-gray-200/90 shadow-sm p-4 sm:p-6 flex flex-col items-center">
+        <div class="static-canvas-container">
+          <canvas id="simCanvas" width="800" height="450"></canvas>
+          <div class="mt-4 flex gap-4">
+            <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg transition-all shadow-sm" id="resetBtn">Đặt Lại Thí Nghiệm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PHONG THI NGHIEM FARADAY -->
+    <div id="tab-faraday" class="tab-content hidden">
+      <div class="faraday-app">
+        <header class="faraday-header">
+          <div>
+            <p class="faraday-eyebrow">Phòng thí nghiệm · Vật lý 11 - 12</p>
+            <h1 class="font-serif-title text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">Faraday trong một chuyển động.</h1>
+            <p class="subtitle text-gray-600 text-sm sm:text-base font-medium mt-2 max-w-3xl leading-relaxed">Kéo thanh nam châm xuyên qua cuộn dây. Khi từ thông thay đổi, dòng điện cảm ứng xuất hiện.</p>
+          </div>
+          <div class="faraday-status"><small>Trạng thái thí nghiệm</small><strong id="experimentStatus">Sẵn sàng</strong></div>
+        </header>
+
+        <div class="faraday-layout">
+          <section class="faraday-experiment" aria-label="Mô phỏng thí nghiệm Faraday">
+            <div class="faraday-experiment-head">
+              <div>
+                <h2 class="font-serif-title text-xl sm:text-2xl font-bold">Tạo dòng điện cảm ứng</h2>
+                <p class="text-gray-500 text-xs sm:text-sm">Đưa nam châm qua lại qua cuộn dây bằng chuột hoặc ngón tay.</p>
+              </div>
+              <div class="faraday-score">Điểm: <span id="score">0</span></div>
+            </div>
+
+            <div class="faraday-lab" id="lab">
+              <div class="faraday-compass-grid" id="compassGrid" aria-label="Lưới các la bàn, mỗi ô là một đơn vị đo"></div>
+              <div class="faraday-coil" aria-label="Cuộn dây đồng gồm bảy vòng dây">
+                <span class="faraday-coil-loop"></span>
+                <span class="faraday-coil-loop"></span>
+                <span class="faraday-coil-loop"></span>
+                <span class="faraday-coil-loop"></span>
+                <span class="faraday-coil-loop"></span>
+                <span class="faraday-coil-loop"></span>
+                <span class="faraday-coil-loop"></span>
+              </div>
+              <div class="faraday-coil-label">cuộn dây</div>
+              <div class="faraday-magnet" id="magnet" role="slider" aria-label="Thanh nam châm kéo được" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4" tabindex="0">
+                <div class="faraday-pole faraday-north">BẮC</div>
+                <div class="faraday-pole faraday-south">NAM</div>
+              </div>
+              <div class="faraday-meter">
+                <div class="faraday-meter-label"><span>Galvanometer</span><span>A</span></div>
+                <div class="faraday-meter-face"><span class="faraday-meter-center"></span></div>
+                <p class="faraday-meter-value" id="currentValue">0.00 A</p>
+                <span class="faraday-led" id="led"></span><span style="font-size: .72rem; color: var(--muted);">đèn cảm ứng</span>
+              </div>
+            </div>
+
+            <div class="faraday-controls">
+              <div class="faraday-progress-wrap"><label for="energy">Năng lượng cảm ứng</label><div class="faraday-progress"><span id="energy"></span></div></div>
+              <div class="faraday-speed-control"><label for="speed">Tốc độ tự chạy <output id="speedValue">1.00x</output></label><input id="speed" type="range" min="0.25" max="2" step="0.25" value="1" aria-label="Điều chỉnh tốc độ nam châm"></div>
+              <div class="faraday-turns-control"><label for="turns">Số vòng dây <output id="turnsValue">7</output></label><input id="turns" type="range" min="3" max="12" step="1" value="7" aria-label="Điều chỉnh số vòng dây"></div>
+              <button class="faraday-btn" id="demoButton" type="button">Tự chạy</button>
+              <button class="faraday-btn secondary" id="resetButton" type="button">Đặt lại</button>
+            </div>
+          </section>
+
+          <aside class="faraday-aside">
+            <section class="faraday-panel">
+              <h3>Nhiệm vụ</h3>
+              <p>Thắp sáng đèn cảm ứng bằng cách tạo ra chuyển động đủ nhanh qua cuộn dây.</p>
+              <div class="faraday-rule"><b>01</b><span>Giữ nam châm và kéo xuyên qua tâm cuộn dây.</span></div>
+              <div class="faraday-rule"><b>02</b><span>Đổi chiều chuyển động để kim lệch sang phía đối diện.</span></div>
+              <div class="faraday-rule"><b>03</b><span>Đạt 100% năng lượng để hoàn thành thí nghiệm.</span></div>
+            </section>
+            <section class="faraday-panel">
+              <h3>Định luật Faraday</h3>
+              <p>Suất điện động cảm ứng tăng khi từ thông qua cuộn dây thay đổi nhanh hơn.</p>
+              <p style="margin-top: 12px; color: var(--ink); font-family: Georgia, serif; font-size: 1.08rem;">ε = − ΔΦ / Δt</p>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCRIPT BAN CHUNG VA CHUYEN TAB -->
+  <script>
+    function openTab(evt, tabId) {
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(c => c.classList.add('hidden'));
+
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(b => b.classList.remove('active'));
+
+      document.getElementById(tabId).classList.remove('hidden');
+      evt.currentTarget.classList.add('active');
+    }
+  </script>
+
+  <!-- SCRIPT THÍ NGHIỆM NHIỆT HỌC -->
+  <script>
+    // DỮ LIỆU 8 CHẤT CHUẨN SGK VẬT LÍ 12
+    const SUBSTANCES = {
+        water: {
+            name: 'Nước đá (H₂O)',
+            isLiquidAtStart: false,
+            isAmorphous: false,
+            T_melt: 0,
+            T_boil: 100,
+            c_solid: 2100,
+            c_liquid: 4200,
+            lambda: 334000,
+            L: 2300000,
+            T_min: -30,
+            T_max: 120,
+            T_default: -20,
+            blockColor: '#e0f2fe',
+            liquidColor: 'rgba(6, 182, 212, 0.5)'
+        },
+        alcohol: {
+            name: 'Rượu (Ethanol)',
+            isLiquidAtStart: true,
+            isAmorphous: false,
+            T_melt: -114,
+            T_boil: 78,
+            c_liquid: 2500,
+            L: 855000,
+            T_min: 20,
+            T_max: 90,
+            T_default: 25,
+            liquidColor: 'rgba(168, 85, 247, 0.35)'
+        },
+        copper: {
+            name: 'Đồng (Cu)',
+            isLiquidAtStart: false,
+            isAmorphous: false,
+            T_melt: 1083,
+            c_solid: 380,
+            c_liquid: 490,
+            lambda: 205000,
+            T_min: 25,
+            T_max: 1200,
+            T_default: 25,
+            blockColor: '#b85d19',
+            glowTemp: 500
+        },
+        aluminum: {
+            name: 'Nhôm (Al)',
+            isLiquidAtStart: false,
+            isAmorphous: false,
+            T_melt: 660,
+            c_solid: 880,
+            c_liquid: 1080,
+            lambda: 397000,
+            T_min: 25,
+            T_max: 750,
+            T_default: 25,
+            blockColor: '#94a3b8'
+        },
+        lead: {
+            name: 'Chì (Pb)',
+            isLiquidAtStart: false,
+            isAmorphous: false,
+            T_melt: 327,
+            c_solid: 130,
+            c_liquid: 150,
+            lambda: 25000,
+            T_min: 25,
+            T_max: 400,
+            T_default: 25,
+            blockColor: '#475569'
+        },
+        iron: {
+            name: 'Sắt (Fe)',
+            isLiquidAtStart: false,
+            isAmorphous: false,
+            T_melt: 1538,
+            c_solid: 460,
+            c_liquid: 820,
+            lambda: 270000,
+            T_min: 25,
+            T_max: 1650,
+            T_default: 25,
+            blockColor: '#334155',
+            glowTemp: 600
+        },
+        oil: {
+            name: 'Dầu ăn',
+            isLiquidAtStart: true,
+            isAmorphous: false,
+            T_boil: 220,
+            c_liquid: 2000,
+            L: 300000,
+            T_min: 25,
+            T_max: 250,
+            T_default: 25,
+            liquidColor: 'rgba(234, 179, 8, 0.65)'
+        },
+        glass: {
+            name: 'Thủy tinh (Vô định hình)',
+            isLiquidAtStart: false,
+            isAmorphous: true,
+            c_solid: 840,
+            T_min: 25,
+            T_max: 800,
+            T_default: 25,
+            blockColor: '#cbd5e1'
+        }
+    };
+
+    // Biến trạng thái
+    let currentKey = 'water';
+    let sub = SUBSTANCES[currentKey];
+    
+    let m = 0.5;
+    let P = 1000;
+    let speed = 12;
+
+    let T = sub.T_default;
+    let time = 0.0;
+    let Q_total = 0;
+    let simState = 'START';
+    let qMeltingAbsorbed = 0;
+    let qBoilingAbsorbed = 0;
+
+    let isRunning = false;
+    let timerId = null;
+
+    // DOM Elements
+    const substanceSelect = document.getElementById('substanceSelect');
+    const mInput = document.getElementById('mInput');
+    const pInput = document.getElementById('pInput');
+    const mVal = document.getElementById('mVal');
+    const pVal = document.getElementById('pVal');
+
+    const btnStart = document.getElementById('btnStart');
+    const btnReset = document.getElementById('btnReset');
+
+    const txtTemp = document.getElementById('txtTemp');
+    const txtTime = document.getElementById('txtTime');
+    const txtHeat = document.getElementById('txtHeat');
+    const statusHeader = document.getElementById('statusHeader');
+    const txtSubstanceTag = document.getElementById('txtSubstanceTag');
+    const substanceSpecs = document.getElementById('substanceSpecs');
+
+    const thermoFluid = document.getElementById('thermoFluid');
+    const thermoMax = document.getElementById('thermoMax');
+    const thermoMelt = document.getElementById('thermoMelt');
+    const thermoMin = document.getElementById('thermoMin');
+
+    const beakerContainer = document.getElementById('beakerContainer');
+    const solidBlockContainer = document.getElementById('solidBlockContainer');
+    const solidMeshBlock = document.getElementById('solidMeshBlock');
+    const txtBlockLabel = document.getElementById('txtBlockLabel');
+
+    const iceContainer = document.getElementById('iceContainer');
+    const liquidFill = document.getElementById('liquidFill');
+    const bubblesContainer = document.getElementById('bubblesContainer');
+    const steamContainer = document.getElementById('steamContainer');
+    const flame = document.getElementById('flame');
+
+    // Chart.js initialization
+    const ctx = document.getElementById('tempChart').getContext('2d');
+    let chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [0],
+            datasets: [{
+                label: 'Nhiệt độ t° (°C)',
+                data: [sub.T_default],
+                borderColor: '#dc2626',
+                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                borderWidth: 2.5,
+                pointRadius: 0,
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    grid: { color: '#262626' },
+                    ticks: { color: '#888888', font: { size: 10 } }
+                },
+                y: {
+                    min: sub.T_min,
+                    max: sub.T_max,
+                    grid: { color: '#262626' },
+                    ticks: { color: '#888888', font: { size: 10 } }
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Xử lý Accordion UI
+    document.querySelectorAll('.accordion-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const content = button.nextElementSibling;
+            const arrow = button.querySelector('.arrow');
+            
+            content.classList.toggle('hidden');
+            arrow.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+    });
+    document.querySelectorAll('.accordion-btn')[0].click();
+
+    // Khởi tạo giao diện theo chất
+    function initSubstanceUI() {
+        sub = SUBSTANCES[currentKey];
+        T = sub.T_default;
+        txtSubstanceTag.textContent = sub.name;
+        
+        // Cập nhật nhãn nhiệt kế
+        thermoMax.textContent = sub.T_max + '°';
+        thermoMelt.textContent = sub.T_melt !== undefined ? sub.T_melt + '°' : '—';
+        thermoMin.textContent = sub.T_min + '°';
+
+        // Hiển thị Cốc đun hoặc Khối kim loại
+        if (sub.isLiquidAtStart || currentKey === 'water') {
+            beakerContainer.classList.remove('hidden');
+            solidBlockContainer.classList.add('hidden');
+            if (sub.liquidColor) liquidFill.style.backgroundColor = sub.liquidColor;
+        } else {
+            beakerContainer.classList.add('hidden');
+            solidBlockContainer.classList.remove('hidden');
+            solidMeshBlock.style.backgroundColor = sub.blockColor || '#64748b';
+            txtBlockLabel.textContent = sub.name.split(' ')[0];
+        }
+
+        // Đổi trục Y đồ thị
+        chart.options.scales.y.min = sub.T_min;
+        chart.options.scales.y.max = sub.T_max;
+
+        // Đổ dữ liệu bảng thông số với kí hiệu t°
+        let specHTML = `
+            <div>• Nhiệt dung riêng: <b class="text-gray-900">${sub.c_solid || sub.c_liquid} J/kg.K</b></div>
+        `;
+        if (sub.T_melt !== undefined) specHTML += `<div>• Nhiệt độ nóng chảy (t°<sub>nc</sub>): <b class="text-gray-900">${sub.T_melt} °C</b></div>`;
+        if (sub.lambda) specHTML += `<div>• Nhiệt nóng chảy riêng (λ): <b class="text-gray-900">${(sub.lambda/1000).toFixed(0)} kJ/kg</b></div>`;
+        if (sub.T_boil) specHTML += `<div>• Nhiệt độ sôi (t°<sub>sôi</sub>): <b class="text-gray-900">${sub.T_boil} °C</b></div>`;
+        if (sub.isAmorphous) specHTML += `<div class="text-red-600 font-bold">• Chất rắn vô định hình</div>`;
+
+        substanceSpecs.innerHTML = specHTML;
+
+        resetSimulation();
+    }
+
+    // Listeners
+    substanceSelect.addEventListener('change', (e) => {
+        currentKey = e.target.value;
+        initSubstanceUI();
+    });
+
+    mInput.addEventListener('input', (e) => {
+        m = parseFloat(e.target.value);
+        mVal.textContent = m.toFixed(1) + ' kg';
+    });
+
+    pInput.addEventListener('input', (e) => {
+        P = parseFloat(e.target.value);
+        pVal.textContent = P + ' W';
+    });
+
+    btnStart.addEventListener('click', () => {
+        if (isRunning) pauseSimulation();
+        else startSimulation();
+    });
+
+    btnReset.addEventListener('click', resetSimulation);
+
+    function startSimulation() {
+        isRunning = true;
+        btnStart.textContent = 'Tạm dừng';
+        btnStart.classList.replace('bg-gray-900', 'bg-amber-600');
+        flame.classList.remove('hidden');
+        substanceSelect.disabled = true;
+        mInput.disabled = true;
+
+        timerId = setInterval(() => {
+            updatePhysics(0.1 * speed);
+            updateUI();
+        }, 50);
+    }
+
+    function pauseSimulation() {
+        isRunning = false;
+        btnStart.textContent = 'Bắt đầu đun';
+        btnStart.classList.replace('bg-amber-600', 'bg-gray-900');
+        flame.classList.add('hidden');
+        if (timerId) clearInterval(timerId);
+    }
+
+    function resetSimulation() {
+        pauseSimulation();
+        substanceSelect.disabled = false;
+        mInput.disabled = false;
+
+        T = sub.T_default;
+        time = 0.0;
+        Q_total = 0;
+        qMeltingAbsorbed = 0;
+        qBoilingAbsorbed = 0;
+
+        if (sub.isLiquidAtStart) simState = 'LIQUID_HEATING';
+        else if (sub.isAmorphous) simState = 'AMORPHOUS_HEATING';
+        else simState = 'SOLID_HEATING';
+
+        chart.data.labels = [0];
+        chart.data.datasets[0].data = [sub.T_default];
+        chart.update();
+
+        updateUI();
+        statusHeader.textContent = "Sẵn sàng đun nóng";
+    }
+
+    function updatePhysics(dt) {
+        time += dt;
+        let dQ = P * dt;
+        Q_total += dQ;
+
+        // 1. CHẤT RẮN VÔ ĐỊNH HÌNH
+        if (simState === 'AMORPHOUS_HEATING') {
+            statusHeader.textContent = `Thủy tinh mềm dần (${T.toFixed(1)}°C - Không có t°nc xác định)`;
+            T += dQ / (m * sub.c_solid);
+            if (T >= sub.T_max) {
+                T = sub.T_max;
+                pauseSimulation();
+                statusHeader.textContent = "Đã đạt nhiệt độ tối đa";
+            }
+        }
+        // 2. TĂNG NHIỆT ĐỘ CHẤT RẮN
+        else if (simState === 'SOLID_HEATING') {
+            statusHeader.textContent = `Đang đun nóng chất rắn (${T.toFixed(1)}°C)`;
+            let c = sub.c_solid;
+            let qNeeded = m * c * (sub.T_melt - T);
+            if (dQ < qNeeded) {
+                T += dQ / (m * c);
+            } else {
+                T = sub.T_melt;
+                simState = 'MELTING';
+            }
+        } 
+        // 3. GIAI ĐOẠN NÓNG CHẢY
+        else if (simState === 'MELTING') {
+            statusHeader.textContent = `Đang nóng chảy ở ${sub.T_melt}°C (Nhiệt độ nằm ngang)`;
+            qMeltingAbsorbed += dQ;
+            T = sub.T_melt;
+            if (qMeltingAbsorbed >= m * sub.lambda) {
+                simState = 'LIQUID_HEATING';
+            }
+        } 
+        // 4. TĂNG NHIỆT ĐỘ CHẤT LỎNG
+        else if (simState === 'LIQUID_HEATING') {
+            statusHeader.textContent = `Đang đun nóng chất lỏng (${T.toFixed(1)}°C)`;
+            let c = sub.c_liquid || sub.c_solid;
+            let targetT = sub.T_boil || sub.T_max;
+            let qNeeded = m * c * (targetT - T);
+            if (dQ < qNeeded) {
+                T += dQ / (m * c);
+            } else {
+                T = targetT;
+                if (sub.T_boil) simState = 'BOILING';
+                else {
+                    pauseSimulation();
+                    statusHeader.textContent = "Đã đạt nhiệt độ tối đa";
+                }
+            }
+        } 
+        // 5. GIAI ĐOẠN SÔI / HÓA HƠI
+        else if (simState === 'BOILING') {
+            statusHeader.textContent = `Đang sôi & hóa hơi ở ${sub.T_boil}°C`;
+            qBoilingAbsorbed += dQ;
+            T = sub.T_boil;
+            if (sub.L && qBoilingAbsorbed >= m * sub.L) {
+                pauseSimulation();
+                statusHeader.textContent = "Chất đã hóa hơi hoàn toàn";
+            }
+        }
+
+        chart.data.labels.push(time.toFixed(1));
+        chart.data.datasets[0].data.push(T.toFixed(1));
+        chart.update();
+    }
+
+    function updateUI() {
+        txtTemp.textContent = T.toFixed(1) + ' °C';
+        txtTime.textContent = time.toFixed(1) + ' s';
+        txtHeat.textContent = (Q_total / 1000).toFixed(1) + ' kJ';
+
+        // Cột nhiệt kế
+        let range = sub.T_max - sub.T_min;
+        let thermoPercent = Math.min(100, Math.max(0, ((T - sub.T_min) / range) * 100));
+        thermoFluid.style.height = thermoPercent + '%';
+
+        // Hiệu ứng phát sáng phát nhiệt kim loại
+        if (sub.glowTemp && T >= sub.glowTemp) {
+            solidMeshBlock.classList.add('glow-metal');
+            solidMeshBlock.style.backgroundColor = '#ef4444';
+        } else if (!sub.isLiquidAtStart && !sub.isLiquid) {
+            solidMeshBlock.classList.remove('glow-metal');
+            if (sub.blockColor) solidMeshBlock.style.backgroundColor = sub.blockColor;
+        }
+
+        // Cập nhật Cốc đun
+        if (currentKey === 'water') {
+            if (simState === 'SOLID_HEATING') {
+                iceContainer.style.opacity = '1';
+                liquidFill.style.height = '0%';
+            } else if (simState === 'MELTING') {
+                let progress = qMeltingAbsorbed / (m * sub.lambda);
+                iceContainer.style.opacity = (1 - progress).toString();
+                liquidFill.style.height = (progress * 65) + '%';
+            } else if (simState === 'LIQUID_HEATING') {
+                iceContainer.style.opacity = '0';
+                liquidFill.style.height = '70%';
+                bubblesContainer.classList.add('hidden');
+                steamContainer.classList.add('hidden');
+            } else if (simState === 'BOILING') {
+                bubblesContainer.classList.remove('hidden');
+                steamContainer.classList.remove('hidden');
+            }
+        } else if (sub.isLiquidAtStart) {
+            iceContainer.style.opacity = '0';
+            liquidFill.style.height = '70%';
+            if (simState === 'BOILING') {
+                bubblesContainer.classList.remove('hidden');
+                steamContainer.classList.remove('hidden');
+            } else {
+                bubblesContainer.classList.add('hidden');
+                steamContainer.classList.add('hidden');
+            }
+        }
+    }
+
+    // Khởi tạo thí nghiệm nhiệt
+    initSubstanceUI();
+  </script>
+
+  <!-- SCRIPT THÍ NGHIỆM TĨNH ĐIỆN -->
+  <script>
+    const canvasSim = document.getElementById('simCanvas');
+    const ctxSim = canvasSim.getContext('2d');
+
+    // Nạp chính xác 2 tên ảnh từ GitHub
+    const sweaterImg = new Image();
+    const balloonImg = new Image();
+
+    sweaterImg.src = './1790256541776.png';
+    balloonImg.src = './1790256519761.png';
+
+    // Cấu hình đối tượng
+    const sweater = { x: 70, y: 100, w: 180, h: 250, charges: [] };
+    const wall = { x: 630, y: 50, w: 110, h: 350, charges: [] };
+    const balloon = { x: 380, y: 200, r: 45, vx: 0, vy: 0, negativeCharges: 0, isDragging: false };
+
+    // Khởi tạo điện tích
+    function initChargesStatic() {
+      sweater.charges = [];
+      wall.charges = [];
+      balloon.negativeCharges = 0;
+      balloon.x = 380;
+      balloon.y = 200;
+      balloon.vx = 0;
+      balloon.vy = 0;
+
+      // Áo len chứa 20 cặp điện tích (+ -)
+      for (let i = 0; i < 20; i++) {
+        sweater.charges.push({
+          x: sweater.x + 30 + Math.random() * (sweater.w - 60),
+          y: sweater.y + 30 + Math.random() * (sweater.h - 60),
+          hasElectron: true
+        });
+      }
+
+      // Bức tường chứa lưới các cặp điện tích (+ -)
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 3; c++) {
+          wall.charges.push({
+            baseX: wall.x + 20 + c * 35,
+            baseY: wall.y + 30 + r * 45,
+            pX: wall.x + 20 + c * 35,
+            pY: wall.y + 30 + r * 45,
+            eX: wall.x + 20 + c * 35 + 12,
+            eY: wall.y + 30 + r * 45
+          });
+        }
+      }
+    }
+
+    // Vẽ dấu cộng (+) MÀU ĐỎ TƯƠI ĐỂ KHÔNG TRÙNG MÀU BÓNG
+    function drawPlus(x, y) {
+      ctxSim.strokeStyle = '#ff4d4d';
+      ctxSim.lineWidth = 3.5;
+      ctxSim.beginPath();
+      ctxSim.moveTo(x - 6, y); ctxSim.lineTo(x + 6, y);
+      ctxSim.moveTo(x, y - 6); ctxSim.lineTo(x, y + 6);
+      ctxSim.stroke();
+    }
+
+    // Vẽ dấu trừ (-) MÀU XANH DƯƠNG
+    function drawMinus(x, y) {
+      ctxSim.strokeStyle = '#38bdf8';
+      ctxSim.lineWidth = 3.5;
+      ctxSim.beginPath();
+      ctxSim.moveTo(x - 6, y); ctxSim.lineTo(x + 6, y);
+      ctxSim.stroke();
+    }
+
+    // Tương tác kéo thả chuột / cảm ứng
+    let dragOffsetX = 0, dragOffsetY = 0;
+
+    function handleStartStatic(clientX, clientY) {
+      const rect = canvasSim.getBoundingClientRect();
+      const mx = clientX - rect.left;
+      const my = clientY - rect.top;
+      const dist = Math.hypot(mx - balloon.x, my - balloon.y);
+
+      if (dist < balloon.r) {
+        balloon.isDragging = true;
+        dragOffsetX = mx - balloon.x;
+        dragOffsetY = my - balloon.y;
+        balloon.vx = 0;
+        balloon.vy = 0;
+      }
+    }
+
+    function handleMoveStatic(clientX, clientY) {
+      if (!balloon.isDragging) return;
+      const rect = canvasSim.getBoundingClientRect();
+      balloon.x = clientX - rect.left - dragOffsetX;
+      balloon.y = clientY - rect.top - dragOffsetY;
+    }
+
+    function handleEndStatic() { balloon.isDragging = false; }
+
+    canvasSim.addEventListener('mousedown', (e) => handleStartStatic(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => handleMoveStatic(e.clientX, e.clientY));
+    window.addEventListener('mouseup', handleEndStatic);
+
+    canvasSim.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) handleStartStatic(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) handleMoveStatic(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    window.addEventListener('touchend', handleEndStatic);
+
+    // Cập nhật mô phỏng vật lý ổn định
+    function updateStatic() {
+      // 1. Cọ xát -> Nhận Electron khi tiếp xúc áo len
+      if (balloon.isDragging) {
+        sweater.charges.forEach(q => {
+          if (q.hasElectron) {
+            const dist = Math.hypot(balloon.x - q.x, balloon.y - q.y);
+            if (dist < balloon.r) {
+              q.hasElectron = false;
+              balloon.negativeCharges++;
+            }
+          }
+        });
+      }
+
+      // 2. Phân cực điện tích bức tường
+      wall.charges.forEach(pair => {
+        const dist = Math.hypot(balloon.x - pair.baseX, balloon.y - pair.baseY);
+        if (dist < 180 && balloon.negativeCharges > 0) {
+          const angle = Math.atan2(pair.baseY - balloon.y, pair.baseX - balloon.x);
+          const pushForce = Math.min(16, (1 - dist / 180) * 14 * (balloon.negativeCharges / 8));
+          pair.eX = pair.baseX + Math.cos(angle) * pushForce;
+          pair.eY = pair.baseY + Math.sin(angle) * pushForce;
+        } else {
+          pair.eX += (pair.baseX + 12 - pair.eX) * 0.1;
+          pair.eY += (pair.baseY - pair.eY) * 0.1;
+        }
+      });
+
+      // 3. Chuẩn hóa chuyển động của bóng (Tránh bay lung tung)
+      if (!balloon.isDragging) {
+        let fx = 0, fy = 0;
+
+        // --- Lực hút về Áo len (Tích điện dương) ---
+        const sweaterPositives = sweater.charges.filter(q => !q.hasElectron).length;
+        if (sweaterPositives > 0 && balloon.negativeCharges > 0) {
+          const sweaterCenterX = sweater.x + sweater.w / 2;
+          const sweaterCenterY = sweater.y + sweater.h / 2;
+          const dist = Math.hypot(sweaterCenterX - balloon.x, sweaterCenterY - balloon.y);
+
+          // Chỉ tác dụng lực nếu bóng ở gần áo len (bán kính < 250px)
+          if (dist < 250) {
+            const pullStrength = 0.12 * (sweaterPositives / 10) * (balloon.negativeCharges / 10);
+            fx += ((sweaterCenterX - balloon.x) / dist) * pullStrength;
+            fy += ((sweaterCenterY - balloon.y) / dist) * pullStrength;
+          }
+        }
+
+        // --- Lực hút về Bức tường (Do phân cực) ---
+        if (balloon.negativeCharges > 0) {
+          const distToWall = wall.x - (balloon.x + balloon.r);
+          // Chỉ hút khi bóng ở khá gần tường (< 150px)
+          if (distToWall > -20 && distToWall < 150) {
+            const wallPull = 0.2 * (balloon.negativeCharges / 10);
+            fx += wallPull;
+          }
+        }
+
+        // Áp dụng gia tốc và Ma sát không khí (Giúp bóng dừng mịn màng)
+        balloon.vx = (balloon.vx + fx) * 0.82;
+        balloon.vy = (balloon.vy + fy) * 0.82;
+
+        // Khống chế vận tốc tối đa
+        const speed = Math.hypot(balloon.vx, balloon.vy);
+        const maxSpeed = 6;
+        if (speed > maxSpeed) {
+          balloon.vx = (balloon.vx / speed) * maxSpeed;
+          balloon.vy = (balloon.vy / speed) * maxSpeed;
+        }
+
+        // Cập nhật vị trí
+        balloon.x += balloon.vx;
+        balloon.y += balloon.vy;
+
+        // Giới hạn biên không cho bóng văng ra khỏi màn hình
+        balloon.x = Math.max(balloon.r, Math.min(wall.x - balloon.r, balloon.x));
+        balloon.y = Math.max(balloon.r, Math.min(canvasSim.height - balloon.r, balloon.y));
+      }
+    }
+
+    // Vẽ đồ họa Canvas
+    function renderStatic() {
+      ctxSim.clearRect(0, 0, canvasSim.width, canvasSim.height);
+
+      // --- 1. VẼ ÁO LEN ---
+      if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
+        ctxSim.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
+      } else {
+        ctxSim.fillStyle = '#374151';
+        ctxSim.beginPath();
+        ctxSim.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 16);
+        ctxSim.fill();
+      }
+
+      // Vẽ điện tích trên áo len
+      sweater.charges.forEach(q => {
+        drawPlus(q.x, q.y);
+        if (q.hasElectron) drawMinus(q.x + 8, q.y);
+      });
+
+      // --- 2. VẼ BỨC TƯỜNG ---
+      ctxSim.fillStyle = '#4b5563';
+      ctxSim.fillRect(wall.x, wall.y, wall.w, wall.h);
+      ctxSim.fillStyle = '#9ca3af';
+      ctxSim.font = '14px sans-serif';
+      ctxSim.fillText('Bức Tường', wall.x + 20, wall.y - 10);
+
+      // Vẽ các cặp điện tích trên tường
+      wall.charges.forEach(pair => {
+        drawPlus(pair.pX, pair.pY);
+        drawMinus(pair.eX, pair.eY);
+      });
+
+      // --- 3. VẼ BONG BÓNG ---
+      ctxSim.save();
+      if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
+        ctxSim.beginPath();
+        ctxSim.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
+        ctxSim.clip();
+        ctxSim.drawImage(balloonImg, balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
+      } else {
+        ctxSim.beginPath();
+        ctxSim.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
+        ctxSim.fillStyle = '#f97316';
+        ctxSim.fill();
+        ctxSim.lineWidth = 2;
+        ctxSim.strokeStyle = '#fdba74';
+        ctxSim.stroke();
+      }
+      ctxSim.restore();
+
+      // Vẽ Electron bám trên quả bóng
+      for (let i = 0; i < balloon.negativeCharges; i++) {
+        const angle = (i / 15) * Math.PI * 2;
+        const rad = (i > 15 ? 0.6 : 0.35) * balloon.r;
+        const ex = balloon.x + Math.cos(angle) * rad;
+        const ey = balloon.y + Math.sin(angle) * rad;
+        drawMinus(ex, ey);
+      }
+
+      requestAnimationFrame(() => {
+        updateStatic();
+        renderStatic();
+      });
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', initChargesStatic);
+
+    initChargesStatic();
+    renderStatic();
+  </script>
+
+  <!-- SCRIPT PHÒNG THÍ NGHIỆM FARADAY -->
+  <script>
+    const lab = document.getElementById('lab');
+    const magnet = document.getElementById('magnet');
+    const coil = document.querySelector('.faraday-coil');
+    const meterFace = document.querySelector('.faraday-meter-face');
+    const currentValue = document.getElementById('currentValue');
+    const energyBar = document.getElementById('energy');
+    const led = document.getElementById('led');
+    const scoreElement = document.getElementById('score');
+    const statusElement = document.getElementById('experimentStatus');
+    const demoButton = document.getElementById('demoButton');
+    const resetButton = document.getElementById('resetButton');
+    const speedControl = document.getElementById('speed');
+    const speedValue = document.getElementById('speedValue');
+    const turnsControl = document.getElementById('turns');
+    const turnsValue = document.getElementById('turnsValue');
+    const compassGrid = document.getElementById('compassGrid');
+    const backgroundCompasses = [];
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    let lastTime = 0;
+    let energy = 0;
+    let score = 0;
+    let demoTimer = null;
+
+    function renderCoil(turns) {
+      coil.innerHTML = '';
+      const loopWidth = 42;
+      const spacing = turns > 1 ? (coil.clientWidth - loopWidth) / (turns - 1) : 0;
+      for (let index = 0; index < turns; index += 1) {
+        const loop = document.createElement('span');
+        loop.className = 'faraday-coil-loop';
+        loop.style.left = `${index * spacing}px`;
+        coil.appendChild(loop);
+      }
+      coil.setAttribute('aria-label', `Cuộn dây đồng gồm ${turns} vòng dây`);
+    }
+
+    function createCompassGrid() {
+      for (let index = 0; index < 80; index += 1) {
+        const compass = document.createElement('div');
+        const needle = document.createElement('span');
+        compass.className = 'faraday-bg-compass';
+        needle.className = 'faraday-bg-needle';
+        compass.appendChild(needle);
+        compassGrid.appendChild(compass);
+        backgroundCompasses.push({ compass, needle });
+      }
+    }
+
+    function updateCompassGrid(centerX, centerY) {
+      const labRect = lab.getBoundingClientRect();
+      const northX = centerX - magnet.offsetWidth / 4;
+      const southX = centerX + magnet.offsetWidth / 4;
+      backgroundCompasses.forEach(({ compass, needle }) => {
+        const compassRect = compass.getBoundingClientRect();
+        const pointX = compassRect.left - labRect.left + compassRect.width / 2;
+        const pointY = compassRect.top - labRect.top + compassRect.height / 2;
+        const northDistance = Math.max(10, Math.hypot(pointX - northX, pointY - centerY));
+        const southDistance = Math.max(10, Math.hypot(pointX - southX, pointY - centerY));
+        const fieldX = (pointX - northX) / northDistance + (southX - pointX) / southDistance;
+        const fieldY = (pointY - centerY) / northDistance + (centerY - pointY) / southDistance;
+        const angle = Math.atan2(fieldY, fieldX) * 180 / Math.PI;
+        needle.style.transform = `rotate(${angle}deg)`;
+      });
+    }
+
+    function setPosition(nextXPosition, nextYPosition = magnet.offsetTop, now = performance.now()) {
+      const maxPosition = lab.clientWidth - magnet.offsetWidth - 12;
+      const maxYPosition = lab.clientHeight - magnet.offsetHeight - 12;
+      const nextX = Math.max(4, Math.min(maxPosition, nextXPosition));
+      const nextY = Math.max(4, Math.min(maxYPosition, nextYPosition));
+      const centerX = nextX + magnet.offsetWidth / 2;
+      const centerY = nextY + magnet.offsetHeight / 2;
+      const coilCenterX = lab.clientWidth / 2;
+      const coilCenterY = lab.clientHeight / 2;
+      const distance = Math.hypot(centerX - coilCenterX, centerY - coilCenterY);
+      const elapsed = Math.max(16, now - lastTime);
+      const movementX = nextX - lastX;
+      const movementY = nextY - lastY;
+      const velocity = lastTime ? Math.hypot(movementX, movementY) / elapsed : 0;
+      const direction = Math.sign(movementX || -movementY);
+      const proximity = Math.max(0, 1 - distance / (Math.min(lab.clientWidth, lab.clientHeight) * 0.72));
+      const intensity = Math.min(1, Math.abs(velocity) * 0.9 * (0.35 + proximity));
+      const signedIntensity = Math.max(-1, Math.min(1, direction * velocity * 4 * (0.35 + proximity)));
+
+      magnet.style.left = `${nextX}px`;
+      magnet.style.top = `${nextY}px`;
+      updateCompassGrid(centerX, centerY);
+      magnet.setAttribute('aria-valuenow', Math.round(nextX / maxPosition * 100));
+      meterFace.style.setProperty('--needle-turn', `${signedIntensity * 46}deg`);
+      meterFace.style.background = intensity > 0.12 ? '#fff4cf' : '#f3eee2';
+      meterFace.style.boxShadow = intensity > 0.12 ? '0 0 18px rgba(255, 216, 106, .55)' : 'none';
+      currentValue.textContent = `${(signedIntensity * 2).toFixed(2)} A`;
+      led.classList.toggle('on', intensity > 0.12);
+      statusElement.textContent = intensity > 0.12 ? 'Có dòng cảm ứng' : 'Sẵn sàng';
+      if (intensity > 0.12) {
+        energy = Math.min(100, energy + intensity * 2.5);
+        energyBar.style.width = `${energy}%`;
+        if (energy >= 100 && score === 0) {
+          score = 100;
+          scoreElement.textContent = score;
+          statusElement.textContent = 'Hoàn thành nhiệm vụ';
+        }
+      }
+      lastX = nextX;
+      lastY = nextY;
+      lastTime = now;
+    }
+
+    function pointerPosition(event) {
+      const rect = lab.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left - magnet.offsetWidth / 2,
+        y: event.clientY - rect.top - magnet.offsetHeight / 2
+      };
+    }
+
+    magnet.addEventListener('pointerdown', event => {
+      dragging = true;
+      magnet.setPointerCapture(event.pointerId);
+      lastTime = performance.now();
+      lastX = magnet.offsetLeft;
+      lastY = magnet.offsetTop;
+    });
+
+    magnet.addEventListener('pointermove', event => {
+      if (dragging) {
+        const pointer = pointerPosition(event);
+        setPosition(pointer.x, pointer.y);
+      }
+    });
+
+    magnet.addEventListener('pointerup', () => { dragging = false; });
+    magnet.addEventListener('pointercancel', () => { dragging = false; });
+
+    magnet.addEventListener('keydown', event => {
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        const horizontalStep = event.key === 'ArrowRight' ? 18 : event.key === 'ArrowLeft' ? -18 : 0;
+        const verticalStep = event.key === 'ArrowDown' ? 18 : event.key === 'ArrowUp' ? -18 : 0;
+        setPosition(magnet.offsetLeft + horizontalStep, magnet.offsetTop + verticalStep);
+      }
+    });
+
+    demoButton.addEventListener('click', () => {
+      if (demoTimer) {
+        clearInterval(demoTimer);
+        demoTimer = null;
+        demoButton.textContent = 'Tự chạy';
+        return;
+      }
+      demoButton.textContent = 'Dừng lại';
+      let direction = 1;
+      demoTimer = setInterval(() => {
+        const maxPosition = lab.clientWidth - magnet.offsetWidth - 12;
+        const next = magnet.offsetLeft + direction * 9 * Number(speedControl.value);
+        if (next >= maxPosition || next <= 4) direction *= -1;
+        setPosition(next, magnet.offsetTop);
+      }, 55);
+    });
+
+    speedControl.addEventListener('input', () => {
+      speedValue.textContent = `${Number(speedControl.value).toFixed(2)}x`;
+    });
+
+    turnsControl.addEventListener('input', () => {
+      const turns = Number(turnsControl.value);
+      turnsValue.textContent = turns;
+      renderCoil(turns);
+    });
+
+    resetButton.addEventListener('click', () => {
+      if (demoTimer) clearInterval(demoTimer);
+      demoTimer = null;
+      demoButton.textContent = 'Tự chạy';
+      energy = 0;
+      score = 0;
+      energyBar.style.width = '0%';
+      scoreElement.textContent = '0';
+      currentValue.textContent = '0.00 A';
+      led.classList.remove('on');
+      statusElement.textContent = 'Sẵn sàng';
+      lastTime = 0;
+      setPosition(4, (lab.clientHeight - magnet.offsetHeight) / 2);
+    });
+
+    renderCoil(Number(turnsControl.value));
+    createCompassGrid();
+    window.addEventListener('resize', () => setPosition(magnet.offsetLeft, magnet.offsetTop));
+    setPosition(4, (lab.clientHeight - magnet.offsetHeight) / 2);
+  </script>
+</body>
+</html>
