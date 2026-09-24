@@ -3,19 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bảng Điều Khiển Thí Nghiệm Nhiệt Học</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Mô Phỏng Thí Nghiệm Ma Sát Tĩnh Điện</title>
   <style>
-    :root {
-      --bg-dark: #121820;
-      --card-bg: #1e2638;
-      --card-border: rgba(255, 255, 255, 0.1);
-      --text-main: #e2e8f0;
-      --text-muted: #94a3b8;
-      --hot-color: #ff4500;
-      --cold-color: #00bfff;
-    }
-
     * {
       box-sizing: border-box;
       margin: 0;
@@ -24,356 +13,353 @@
     }
 
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      padding: 24px;
+      background-color: #0f172a;
+      color: #f8fafc;
       display: flex;
-      flex-direction: column;
-      gap: 24px;
+      justify-content: center;
+      align-items: center;
       min-height: 100vh;
-    }
-
-    header {
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    header h1 {
-      font-size: 1.5rem;
-      letter-spacing: 1px;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .status-badge {
-      font-size: 0.85rem;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: rgba(0, 191, 255, 0.15);
-      color: var(--cold-color);
-      border: 1px solid var(--cold-color);
-    }
-
-    .grid-layout {
-      display: grid;
-      grid-template-columns: 280px 1fr 340px;
-      gap: 20px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
-    .card-title {
-      font-size: 1rem;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .lab-card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 800px;
+      padding: 24px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
 
-    /* Nhiệt kế mô phỏng */
-    .thermometer-container {
+    .header {
+      border-bottom: 1px solid #334155;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: #38bdf8;
+    }
+
+    .simulation-area {
+      position: relative;
+      width: 100%;
+      height: 320px;
+      background-color: #020617;
+      border: 2px dashed #475569;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      cursor: crosshair;
+    }
+
+    /* Thước nhựa */
+    .ruler {
+      position: absolute;
+      width: 220px;
+      height: 40px;
+      background: rgba(56, 189, 248, 0.2);
+      border: 2px solid #38bdf8;
+      border-radius: 6px;
+      top: 50px;
+      left: 50px;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 15px;
+      justify-content: space-around;
+      user-select: none;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+      z-index: 10;
     }
 
-    .thermometer {
-      width: 24px;
-      height: 220px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 2px solid var(--card-border);
-      border-radius: 12px 12px 0 0;
-      position: relative;
+    /* Vải dạ / Vải len */
+    .cloth {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      background-color: #b91c1c;
+      border: 2px solid #ef4444;
+      border-radius: 12px;
+      top: 150px;
+      left: 500px;
       display: flex;
-      align-items: flex-end;
-      padding: 3px;
-    }
-
-    .thermometer-fill {
-      width: 100%;
-      height: 25%;
-      background: linear-gradient(to top, var(--cold-color), #ff8c00);
-      border-radius: 8px 8px 0 0;
-      transition: height 0.3s ease, background 0.3s ease;
-    }
-
-    .temp-display {
-      font-size: 2.2rem;
+      justify-content: center;
+      align-items: center;
       font-weight: bold;
-      font-family: monospace;
-      color: var(--cold-color);
-      transition: color 0.3s ease;
+      color: #fef2f2;
+      user-select: none;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+      z-index: 5;
     }
 
-    /* Đồ thị */
-    .chart-container {
-      position: relative;
-      height: 300px;
+    /* Vụ giấy */
+    .paper-piece {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background-color: #f1f5f9;
+      border-radius: 2px;
+      transition: transform 0.1s ease-out;
     }
 
-    /* Control Panel */
+    /* Bảng thông số / Điều khiển */
     .controls {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
+      background-color: #0f172a;
+      padding: 16px;
+      border-radius: 8px;
     }
 
-    .control-group {
+    .stat-box {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
     }
 
-    .control-group label {
-      font-size: 0.9rem;
-      color: var(--text-muted);
+    .stat-label {
+      font-size: 0.875rem;
+      color: #94a3b8;
     }
 
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--hot-color);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
+    .stat-value {
+      font-size: 1.25rem;
       font-weight: bold;
+      color: #38bdf8;
+    }
+
+    .charge-bar-container {
+      width: 100%;
+      height: 10px;
+      background-color: #334155;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .charge-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #ef4444);
+      transition: width 0.2s ease;
+    }
+
+    .instructions {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .btn-reset {
+      grid-column: span 2;
+      padding: 10px;
+      background-color: #334155;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      font-weight: bold;
+      transition: background-color 0.2s;
     }
 
-    .btn-primary {
-      background: var(--hot-color);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      opacity: 0.9;
-      box-shadow: 0 0 12px rgba(255, 69, 0, 0.4);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-main);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.2);
+    .btn-reset:hover {
+      background-color: #475569;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>🔥 Phòng Thí Nghiệm Nhiệt Học</h1>
-    <span class="status-badge" id="statusBadge">Trạng thái: Ổn định</span>
-  </header>
-
-  <div class="grid-layout">
-    <!-- Cột 1: Cảm biến Nhiệt kế -->
-    <div class="card thermometer-container">
-      <div class="card-title">Nhiệt Độ Hiện Tại</div>
-      <div class="thermometer">
-        <div class="thermometer-fill" id="tempFill"></div>
-      </div>
-      <div class="temp-display" id="tempValue">25.0 °C</div>
+  <div class="lab-card">
+    <div class="header">
+      <h1>⚡ Thí Nghiệm Ma Sát Tĩnh Điện</h1>
     </div>
 
-    <!-- Cột 2: Đồ thị Thời gian thực -->
-    <div class="card">
-      <div class="card-title">Đồ Thị Biến Thiên Nhiệt Độ Theo Thời Gian (t)</div>
-      <div class="chart-container">
-        <canvas id="tempChart"></canvas>
+    <div class="simulation-area" id="simArea">
+      <!-- Thước nhựa -->
+      <div class="ruler" id="ruler">
+        <span style="font-size: 12px; color: #38bdf8;">Thước Nhựa</span>
       </div>
+
+      <!-- Mảnh vải -->
+      <div class="cloth" id="cloth">Vải Dạ</div>
+
+      <!-- Vụ giấy sẽ được tạo bằng JS -->
     </div>
 
-    <!-- Cột 3: Bảng Bảng điều khiển -->
-    <div class="card controls">
-      <div class="card-title">Thông Số Thí Nghiệm</div>
-      
-      <div class="control-group">
-        <label for="powerRange">Công suất gia nhiệt (W): <b id="powerVal">500 W</b></label>
-        <input type="range" id="powerRange" min="100" max="2000" step="100" value="500">
+    <div class="controls">
+      <div class="stat-box">
+        <span class="stat-label">Điện tích tích tụ (Q):</span>
+        <span class="stat-value" id="chargeText">0 µC</span>
+        <div class="charge-bar-container">
+          <div class="charge-bar" id="chargeBar"></div>
+        </div>
       </div>
 
-      <div class="control-group">
-        <label for="massRange">Khối lượng chất lỏng (kg): <b id="massVal">1.0 kg</b></label>
-        <input type="range" id="massRange" min="0.2" max="5.0" step="0.1" value="1.0">
+      <div class="stat-box">
+        <span class="stat-label">Trạng thái mảnh giấy:</span>
+        <span class="stat-value" id="paperStatusText" style="color: #94a3b8;">Bình thường</span>
       </div>
 
-      <div class="btn-group">
-        <button class="btn-primary" id="startBtn">Bắt đầu gia nhiệt</button>
-        <button class="btn-secondary" id="resetBtn">Đặt lại</button>
-      </div>
+      <button class="btn-reset" onclick="resetLab()">Đặt Lại Thí Nghiệm</button>
+    </div>
+
+    <div class="instructions">
+      💡 <b>Hướng dẫn:</b> Kéo <b>Thước Nhựa</b> chà xát liên tục vào <b>Mảnh Vải</b> để tích điện tĩnh. Sau đó, đưa thước lại gần các <b>mảnh giấy</b> ở góc dưới để xem lực hút tĩnh điện!
     </div>
   </div>
 
   <script>
-    // Khởi tạo các biến trạng thái
-    let currentTemp = 25.0;
-    let isHeating = false;
-    let timeStep = 0;
-    let intervalId = null;
+    const ruler = document.getElementById('ruler');
+    const cloth = document.getElementById('cloth');
+    const simArea = document.getElementById('simArea');
+    const chargeText = document.getElementById('chargeText');
+    const chargeBar = document.getElementById('chargeBar');
+    const paperStatusText = document.getElementById('paperStatusText');
 
-    // Element references
-    const tempValueEl = document.getElementById('tempValue');
-    const tempFillEl = document.getElementById('tempFill');
-    const statusBadgeEl = document.getElementById('statusBadge');
-    const startBtn = document.getElementById('startBtn');
-    const resetBtn = document.getElementById('resetBtn');
+    let charge = 0; // Điện tích (0 -> 100)
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    let lastPos = { x: 0, y: 0 };
     
-    const powerRange = document.getElementById('powerRange');
-    const powerVal = document.getElementById('powerVal');
-    const massRange = document.getElementById('massRange');
-    const massVal = document.getElementById('massVal');
+    // Tạo danh sách mảnh giấy ngẫu nhiên ở khu vực dưới
+    const papers = [];
+    const paperCount = 15;
 
-    // Cập nhật giá trị Slider
-    powerRange.addEventListener('input', (e) => powerVal.textContent = `${e.target.value} W`);
-    massRange.addEventListener('input', (e) => massVal.textContent = `${e.target.value} kg`);
+    function initPapers() {
+      // Xóa các giấy cũ nếu có
+      document.querySelectorAll('.paper-piece').forEach(el => el.remove());
+      papers.length = 0;
 
-    // Khởi tạo đồ thị Chart.js
-    const ctx = document.getElementById('tempChart').getContext('2d');
-    const tempChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [0],
-        datasets: [{
-          label: 'Nhiệt độ (°C)',
-          data: [25.0],
-          borderColor: '#00bfff',
-          backgroundColor: 'rgba(0, 191, 255, 0.1)',
-          fill: true,
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            title: { display: true, text: 'Thời gian (giây)', color: '#94a3b8' },
-            ticks: { color: '#94a3b8' },
-            grid: { color: 'rgba(255, 255, 255, 0.05)' }
-          },
-          y: {
-            title: { display: true, text: 'Nhiệt độ (°C)', color: '#94a3b8' },
-            ticks: { color: '#94a3b8' },
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            suggestedMin: 20,
-            suggestedMax: 100
-          }
-        },
-        plugins: {
-          legend: { labels: { color: '#e2e8f0' } }
-        }
+      for (let i = 0; i < paperCount; i++) {
+        const paper = document.createElement('div');
+        paper.className = 'paper-piece';
+        
+        // Tọa độ ngẫu nhiên ở góc dưới bên trái
+        const x = 50 + Math.random() * 200;
+        const y = 230 + Math.random() * 50;
+        
+        paper.style.left = `${x}px`;
+        paper.style.top = `${y}px`;
+        
+        simArea.appendChild(paper);
+        papers.push({ element: paper, originX: x, originY: y, isAttracted: false });
       }
+    }
+
+    // Xử lý kéo thả thước
+    ruler.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      const rect = ruler.getBoundingClientRect();
+      dragOffset.x = e.clientX - rect.left;
+      dragOffset.y = e.clientY - rect.top;
     });
 
-    // Cập nhật giao diện nhiệt độ
-    function updateUI(temp) {
-      tempValueEl.textContent = `${temp.toFixed(1)} °C`;
-      
-      // Tính phần trăm cột nhiệt kế (20°C - 100°C)
-      const fillPercentage = Math.min(Math.max(((temp - 20) / 80) * 100, 5), 100);
-      tempFillEl.style.height = `${fillPercentage}%`;
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
 
-      // Chuyển đổi màu sắc khi nhiệt độ tăng
-      if (temp > 60) {
-        const color = '#ff4500';
-        tempValueEl.style.color = color;
-        tempChart.data.datasets[0].borderColor = color;
-        tempChart.data.datasets[0].backgroundColor = 'rgba(255, 69, 0, 0.1)';
-      } else {
-        const color = '#00bfff';
-        tempValueEl.style.color = color;
-        tempChart.data.datasets[0].borderColor = color;
-        tempChart.data.datasets[0].backgroundColor = 'rgba(0, 191, 255, 0.1)';
-      }
-      tempChart.update('none');
-    }
+      const simRect = simArea.getBoundingClientRect();
+      let x = e.clientX - simRect.left - dragOffset.x;
+      let y = e.clientY - simRect.top - dragOffset.y;
 
-    // Vòng lặp đun nóng (Mô phỏng Q = m * c * dT => dT = P * dt / (m * c))
-    function startHeating() {
-      if (isHeating) {
-        clearInterval(intervalId);
-        isHeating = false;
-        startBtn.textContent = 'Tiếp tục gia nhiệt';
-        statusBadgeEl.textContent = 'Trạng thái: Tạm dừng';
-        statusBadgeEl.style.color = '#ff8c00';
-        return;
-      }
+      // Giới hạn trong vùng sim
+      x = Math.max(0, Math.min(x, simRect.width - 220));
+      y = Math.max(0, Math.min(y, simRect.height - 40));
 
-      isHeating = true;
-      startBtn.textContent = 'Tạm dừng';
-      statusBadgeEl.textContent = 'Trạng thái: Đang gia nhiệt...';
-      statusBadgeEl.style.color = 'var(--hot-color)';
+      ruler.style.left = `${x}px`;
+      ruler.style.top = `${y}px`;
 
-      const c = 4184; // Nhiệt dung riêng của nước (J/kg.K)
+      // TÍNH MA SÁT VỚI VẢI
+      checkFriction(x, y);
 
-      intervalId = setInterval(() => {
-        if (currentTemp >= 100) {
-          clearInterval(intervalId);
-          isHeating = false;
-          startBtn.textContent = 'Đạt điểm sôi!';
-          statusBadgeEl.textContent = 'Trạng thái: Đạt điểm sôi (100°C)';
-          return;
+      // KÍCH THÍCH HÚT GIẤY
+      checkPaperAttraction(x, y);
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Kiểm tra va chạm / ma sát giữa thước và vải
+    function checkFriction(rulerX, rulerY) {
+      const clothRect = cloth.getBoundingClientRect();
+      const simRect = simArea.getBoundingClientRect();
+
+      const clothX = clothRect.left - simRect.left;
+      const clothY = clothRect.top - simRect.top;
+
+      // Kiểm tra xem thước có đè lên vải không
+      const isOverlapping = 
+        rulerX < clothX + 120 &&
+        rulerX + 220 > clothX &&
+        rulerY < clothY + 120 &&
+        rulerY + 40 > clothY;
+
+      if (isOverlapping) {
+        // Tính khoảng cách di chuyển để tăng điện tích
+        const dist = Math.hypot(rulerX - lastPos.x, rulerY - lastPos.y);
+        if (dist > 2) {
+          charge = Math.min(100, charge + dist * 0.15);
+          updateChargeUI();
         }
-
-        timeStep += 1;
-        const P = parseFloat(powerRange.value);
-        const m = parseFloat(massRange.value);
-        
-        // Tăng nhiệt độ
-        const deltaT = P / (m * c);
-        currentTemp += deltaT * 5; // Nhân hệ số để mô phỏng nhanh hơn
-
-        // Cập nhật biểu đồ
-        tempChart.data.labels.push(timeStep);
-        tempChart.data.datasets[0].data.push(currentTemp);
-        
-        updateUI(currentTemp);
-      }, 500);
+      }
+      lastPos = { x: rulerX, y: rulerY };
     }
 
-    // Đặt lại thí nghiệm
-    function resetExperiment() {
-      clearInterval(intervalId);
-      isHeating = false;
-      currentTemp = 25.0;
-      timeStep = 0;
+    // Kiểm tra và hút vụ giấy
+    function checkPaperAttraction(rulerX, rulerY) {
+      const rulerCenter = { x: rulerX + 110, y: rulerY + 20 };
+      let attractedCount = 0;
 
-      startBtn.textContent = 'Bắt đầu gia nhiệt';
-      statusBadgeEl.textContent = 'Trạng thái: Ổn định';
-      statusBadgeEl.style.color = 'var(--cold-color)';
+      papers.forEach(p => {
+        const dist = Math.hypot(p.originX - rulerCenter.x, p.originY - rulerCenter.y);
 
-      tempChart.data.labels = [0];
-      tempChart.data.datasets[0].data = [25.0];
-      
-      updateUI(currentTemp);
+        // Khoảng cách hút phụ thuộc vào điện tích (charge)
+        const attractRadius = (charge / 100) * 120;
+
+        if (dist < attractRadius && charge > 15) {
+          // Hút mảnh giấy về phía thước
+          const angle = Math.atan2(rulerCenter.y - p.originY, rulerCenter.x - p.originX);
+          const moveDist = Math.min(dist, attractRadius - dist + 20);
+          
+          p.element.style.transform = `translate(${Math.cos(angle) * moveDist}px, ${Math.sin(angle) * moveDist}px) rotate(${charge * 2}deg)`;
+          p.isAttracted = true;
+          attractedCount++;
+        } else {
+          // Trở về vị trí cũ
+          p.element.style.transform = `translate(0, 0) rotate(0deg)`;
+          p.isAttracted = false;
+        }
+      });
+
+      if (attractedCount > 0) {
+        paperStatusText.textContent = `Đang bị hút (${attractedCount} mảnh)`;
+        paperStatusText.style.color = '#38bdf8';
+      } else {
+        paperStatusText.textContent = 'Bình thường';
+        paperStatusText.style.color = '#94a3b8';
+      }
     }
 
-    startBtn.addEventListener('click', startHeating);
-    resetBtn.addEventListener('click', resetExperiment);
+    function updateChargeUI() {
+      chargeText.textContent = `${Math.round(charge)} µC`;
+      chargeBar.style.width = `${charge}%`;
+    }
+
+    function resetLab() {
+      charge = 0;
+      updateChargeUI();
+      ruler.style.left = '50px';
+      ruler.style.top = '50px';
+      paperStatusText.textContent = 'Bình thường';
+      paperStatusText.style.color = '#94a3b8';
+      initPapers();
+    }
+
+    // Khởi tạo ban đầu
+    initPapers();
   </script>
 </body>
 </html>
