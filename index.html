@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mô Phỏng Tĩnh Điện: Áo Len & Bong Bóng (Custom Image)</title>
+  <title>Mô Phỏng Tĩnh Điện</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -18,29 +18,6 @@
     }
     h1 { margin-bottom: 8px; font-size: 24px; color: #f9fafb; }
     p.desc { margin-bottom: 20px; font-size: 14px; color: #9ca3af; text-align: center; max-width: 650px; }
-    
-    .upload-bar {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .upload-btn {
-      background: #374151;
-      border: 1px dashed #6b7280;
-      color: #e5e7eb;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }
-    .upload-btn:hover { background: #4b5563; border-color: #9ca3af; }
-    .upload-btn input { display: none; }
 
     canvas {
       background: #1f2937;
@@ -71,22 +48,10 @@
 </head>
 <body>
 
-  <h1>Thí Nghiệm Tĩnh Điện với Ảnh Tùy Chỉnh</h1>
+  <h1>Thí Nghiệm Tĩnh Điện (Electrostatics)</h1>
   <p class="desc">
-    Tải ảnh chiếc áo len và bóng bay của bạn lên để mô phỏng! Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> để xem lực hút tĩnh điện.
+    Kéo <b>Bóng bay</b> cọ xát vào <b>Áo len</b> để nhận Electron, sau đó thả ra gần <b>Bức tường</b> để xem lực hút tĩnh điện!
   </p>
-
-  <!-- Thanh tải ảnh lên -->
-  <div class="upload-bar">
-    <label class="upload-btn">
-      📷 Tải ảnh Áo Len
-      <input type="file" id="sweaterImgInput" accept="image/*">
-    </label>
-    <label class="upload-btn">
-      🎈 Tải ảnh Bong Bóng
-      <input type="file" id="balloonImgInput" accept="image/*">
-    </label>
-  </div>
 
   <canvas id="simCanvas" width="800" height="450"></canvas>
 
@@ -98,33 +63,12 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Nạp ảnh tùy chỉnh hoặc dùng mặc định
-    let sweaterImg = null;
-    let balloonImg = null;
+    // Nạp chính xác 2 tên ảnh của bạn từ GitHub
+    const sweaterImg = new Image();
+    const balloonImg = new Image();
 
-    document.getElementById('sweaterImgInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          sweaterImg = new Image();
-          sweaterImg.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    document.getElementById('balloonImgInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          balloonImg = new Image();
-          balloonImg.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    sweaterImg.src = './1790256541776.png';
+    balloonImg.src = './1790256519761.png';
 
     // Cấu hình vật thể
     const sweater = { x: 70, y: 100, w: 180, h: 250, charges: [] };
@@ -141,7 +85,7 @@
       balloon.vx = 0;
       balloon.vy = 0;
 
-      // Áo len chứa 20 cặp (+ -)
+      // Áo len chứa 20 cặp điện tích (+ -)
       for (let i = 0; i < 20; i++) {
         sweater.charges.push({
           x: sweater.x + 30 + Math.random() * (sweater.w - 60),
@@ -150,7 +94,7 @@
         });
       }
 
-      // Bức tường chứa lưới các cặp (+ -)
+      // Bức tường chứa lưới các cặp điện tích (+ -)
       for (let r = 0; r < 7; r++) {
         for (let c = 0; c < 3; c++) {
           wall.charges.push({
@@ -249,11 +193,11 @@
         }
       });
 
-      // 3. Lực hút tĩnh điện khi không kéo bóng
+      // 3. Lực hút tĩnh điện khi thả bóng
       if (!balloon.isDragging) {
         let fx = 0, fy = 0;
 
-        // Lực hút về Áo len (Tích điện dương)
+        // Lực hút về Áo len
         const sweaterPositiveCount = sweater.charges.filter(q => !q.hasElectron).length;
         if (sweaterPositiveCount > 0 && balloon.negativeCharges > 0) {
           const sweaterCenterX = sweater.x + sweater.w / 2;
@@ -266,7 +210,7 @@
           }
         }
 
-        // Lực hút về Bức tường (Do phân cực)
+        // Lực hút về Bức tường
         if (balloon.negativeCharges > 0 && Math.abs(balloon.x - wall.x) < 220) {
           const force = (balloon.negativeCharges * 1.5) / Math.max(30, (wall.x - balloon.x));
           fx += force;
@@ -284,21 +228,18 @@
       }
     }
 
-    // Vẽ hình ảnh & điện tích lên Canvas
+    // Vẽ đồ họa lên Canvas
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // --- 1. VẼ ÁO LEN ---
-      if (sweaterImg && sweaterImg.complete) {
+      if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
         ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
       } else {
         ctx.fillStyle = '#374151';
         ctx.beginPath();
         ctx.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 16);
         ctx.fill();
-        ctx.fillStyle = '#9ca3af';
-        ctx.font = '14px sans-serif';
-        ctx.fillText('Áo Len (Chưa tải ảnh)', sweater.x + 20, sweater.y - 10);
       }
 
       // Vẽ điện tích trên áo len
@@ -311,6 +252,7 @@
       ctx.fillStyle = '#4b5563';
       ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
       ctx.fillStyle = '#9ca3af';
+      ctx.font = '14px sans-serif';
       ctx.fillText('Bức Tường', wall.x + 20, wall.y - 10);
 
       // Vẽ các cặp điện tích trên tường
@@ -321,7 +263,7 @@
 
       // --- 3. VẼ BONG BÓNG ---
       ctx.save();
-      if (balloonImg && balloonImg.complete) {
+      if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
         ctx.beginPath();
         ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
         ctx.clip();
@@ -358,4 +300,4 @@
     render();
   </script>
 </body>
-  </html>
+</html>
