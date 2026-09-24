@@ -222,7 +222,6 @@
     let mode = 'isochoric';
     let modeTemperature = 300;
     let modeVolume = 1;
-    let modePressure = 1.0;
     let particles = [];
     let dragActive = false;
     let dragStartY = 0;
@@ -237,9 +236,6 @@
     }
 
     function computePressure() {
-      if (mode === 'isobaric') {
-        return modePressure;
-      }
       const v = volumeRatio();
       return (temperature / 300) * (particles.length / 24) / v;
     }
@@ -276,17 +272,17 @@
         temperature = modeTemperature;
       }
 
-      if (mode === 'isobaric' && !pistonActive) {
-        const maxOffset = Math.max(0, canvas.clientHeight * .48);
-        const targetVolume = Math.max(0.35, Math.min(1, modeVolume * (temperature / modeTemperature)));
-        setPistonOffset((1 - targetVolume) * maxOffset, false);
-      }
-
       temperatureText.innerHTML = temperature + ' <small>K</small>';
       particleText.textContent = particles.length;
       pressureText.innerHTML = computePressure().toFixed(1) + ' <small>atm</small>';
       temperatureMeter.style.width = ((temperature - 180) / 340 * 100) + '%';
       roller.style.top = ((520 - temperature) / 340 * 43) + 'px';
+
+      if (mode === 'isobaric' && !pistonActive) {
+        const maxOffset = Math.max(0, canvas.clientHeight * .48);
+        const targetVolume = Math.max(0.35, Math.min(1, modeVolume * temperature / modeTemperature));
+        setPistonOffset((1 - targetVolume) * maxOffset, false);
+      }
     }
 
     function setPistonOffset(value, refreshTemperature = true) {
@@ -301,7 +297,6 @@
       mode = nextMode;
       modeTemperature = temperature;
       modeVolume = volumeRatio();
-      modePressure = (temperature / 300) * (particles.length / 24) / modeVolume;
 
       modeButtons.forEach((button) => {
         button.classList.toggle('active', button.dataset.mode === mode);
@@ -311,7 +306,7 @@
 
       if (mode === 'isobaric') {
         const maxOffset = Math.max(0, canvas.clientHeight * .48);
-        const targetVolume = Math.max(0.35, Math.min(1, modeVolume * (temperature / modeTemperature)));
+        const targetVolume = Math.max(0.35, Math.min(1, modeVolume * temperature / modeTemperature));
         setPistonOffset((1 - targetVolume) * maxOffset, false);
       }
 
@@ -389,4 +384,97 @@
       dragActive = true;
       dragStartY = event.clientY;
       dragStartTemperature = temperature;
-      roller.setPointerCapture(
+      roller.setPointerCapture(event.pointerId);
+    });
+
+    roller.addEventListener('pointermove', (event) => {
+      event.preventDefault();
+      if (!dragActive) return;
+
+      const nextTemperature = dragStartTemperature + (dragStartY - event.clientY) * 4;
+      temperatureTrend = nextTemperature > temperature ? 1 : -1;
+      setTemperature(nextTemperature);
+      showTemperatureEffect();
+    });
+
+    roller.addEventListener('pointerup', () => {
+      dragActive = false;
+      temperatureTrend = 0;
+      showTemperatureEffect();
+    });
+
+    roller.addEventListener('pointercancel', () => {
+      dragActive = false;
+      temperatureTrend = 0;
+      showTemperatureEffect();
+    });
+
+    piston.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      if (mode === 'isochoric' || mode === 'isobaric') return;
+      pistonActive = true;
+      piston.setPointerCapture(event.pointerId);
+      piston.dataset.startY = event.clientY;
+      piston.dataset.startOffset = pistonOffset;
+      finger.classList.add('is-pressing');
+    });
+
+    piston.addEventListener('pointermove', (event) => {
+      event.preventDefault();
+      if (!pistonActive) return;
+      if (mode === 'isochoric' || mode === 'isobaric') return;
+
+      const startY = Number(piston.dataset.startY);
+      const startOffset = Number(piston.dataset.startOffset);
+      const delta = event.clientY - startY;
+      const nextOffset = startOffset + delta;
+      setPistonOffset(nextOffset, false);
+
+      if (mode === 'isothermal') {
+        setTemperature(temperature);
+      }
+      if (mode === 'custom') {
+        modeVolume = volumeRatio();
+      }
+    });
+
+    piston.addEventListener('pointerup', () => {
+      pistonActive = false;
+      finger.classList.remove('is-pressing');
+    });
+
+    piston.addEventListener('pointercancel', () => {
+      pistonActive = false;
+      finger.classList.remove('is-pressing');
+    });
+
+    modeButtons.forEach((button) => {
+      button.addEventListener('click', () => setMode(button.dataset.mode));
+    });
+
+    function pumpParticles() {
+      for (let i = 0; i < 4; i += 1) addParticle();
+      setTemperature(temperature);
+    }
+
+    document.getElementById('pump').addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      pumpParticles();
+    });
+
+    document.getElementById('pump').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        pumpParticles();
+      }
+    });
+
+    document.getElementById('resetButton').addEventListener('click', seed);
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    seed();
+    draw();
+  </script>
+</body>
+</html>
