@@ -65,13 +65,11 @@
 
     const sweaterImg = new Image();
     const balloonImg = new Image();
-
     sweaterImg.src = './1790256541776.png';
     balloonImg.src = './1790256519761.png';
 
     const sweater = { x: 70, y: 100, w: 180, h: 250, charges: [] };
     const wall = { x: 630, y: 50, w: 110, h: 350, charges: [] };
-    // Bóng ban đầu trung hòa; negativeCharges là số electron dư nhận từ áo len.
     const balloon = { x: 380, y: 200, r: 45, vx: 0, vy: 0, negativeCharges: 0, isDragging: false };
 
     function initCharges() {
@@ -84,7 +82,6 @@
       balloon.vy = 0;
       balloon.isDragging = false;
 
-      // Mỗi vị trí trên áo có một ion dương cố định và một electron ban đầu.
       for (let i = 0; i < 20; i++) {
         sweater.charges.push({
           x: sweater.x + 30 + Math.random() * (sweater.w - 60),
@@ -93,7 +90,6 @@
         });
       }
 
-      // Trong tường, ion dương cố định còn electron có thể dịch chuyển để phân cực.
       for (let r = 0; r < 7; r++) {
         for (let c = 0; c < 3; c++) {
           wall.charges.push({
@@ -108,7 +104,6 @@
       }
     }
 
-    // Màu vàng giúp ion dương không bị nhầm với màu của quả bóng.
     function drawPlus(x, y) {
       ctx.strokeStyle = '#facc15';
       ctx.lineWidth = 3;
@@ -118,7 +113,6 @@
       ctx.stroke();
     }
 
-    // Electron luôn được biểu diễn bằng dấu trừ màu xanh.
     function drawMinus(x, y) {
       ctx.strokeStyle = '#3b82f6';
       ctx.lineWidth = 3;
@@ -166,7 +160,7 @@
     window.addEventListener('touchend', handleEnd);
 
     function update() {
-      // Chỉ electron rời áo và chuyển sang bóng; ion dương vẫn ở lại áo.
+      // 1. Cọ xát -> electron chuyển từ áo len sang bóng bay.
       if (balloon.isDragging) {
         sweater.charges.forEach(q => {
           if (q.hasElectron) {
@@ -179,7 +173,7 @@
         });
       }
 
-      // Electron trong tường bị đẩy ra xa bóng âm; ion dương không di chuyển.
+      // 2. Phân cực tường: electron bị đẩy khỏi mặt tường gần bóng âm, ion dương lộ ra.
       wall.charges.forEach(pair => {
         const dist = Math.hypot(balloon.x - pair.baseX, balloon.y - pair.baseY);
         if (dist < 200 && balloon.negativeCharges > 0) {
@@ -193,6 +187,7 @@
         }
       });
 
+      // 3. Lực giữa bóng âm và các điện tích dương của áo len + tường.
       if (!balloon.isDragging) {
         let fx = 0, fy = 0;
 
@@ -201,15 +196,17 @@
           const sweaterCenterX = sweater.x + sweater.w / 2;
           const sweaterCenterY = sweater.y + sweater.h / 2;
           const dist = Math.hypot(sweaterCenterX - balloon.x, sweaterCenterY - balloon.y);
-          if (dist < 350) {
+          if (dist > 0 && dist < 350) {
             const force = (sweaterPositiveCount * balloon.negativeCharges) / (dist * 0.8);
             fx += ((sweaterCenterX - balloon.x) / dist) * force;
             fy += ((sweaterCenterY - balloon.y) / dist) * force;
           }
         }
 
+        // Lực hút của tường do phân cực điện: mặt gần bóng âm là dương, do đó hút bóng lại.
         if (balloon.negativeCharges > 0 && Math.abs(balloon.x - wall.x) < 220) {
-          const force = (balloon.negativeCharges * 1.5) / Math.max(30, (wall.x - balloon.x));
+          const dist = Math.max(30, wall.x - balloon.x);
+          const force = (balloon.negativeCharges * 1.5) / dist;
           fx += force;
         }
 
@@ -226,6 +223,7 @@
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Áo len: dương ở vị trí mất electron.
       if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
         ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
       } else {
@@ -240,6 +238,7 @@
         if (q.hasElectron) drawMinus(q.x + 8, q.y);
       });
 
+      // Tường: phân cực, mặt gần bóng dương, mặt xa bóng âm.
       ctx.fillStyle = '#4b5563';
       ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
       ctx.fillStyle = '#9ca3af';
@@ -251,6 +250,7 @@
         drawMinus(pair.eX, pair.eY);
       });
 
+      // Bóng bay: nếu tích điện âm thì chỉ hiển thị electron, không có dấu "+" trên bóng.
       ctx.save();
       if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
         ctx.beginPath();
@@ -268,7 +268,6 @@
       }
       ctx.restore();
 
-      // Bóng chỉ hiển thị electron dư, không vẽ dấu cộng trên bóng.
       for (let i = 0; i < balloon.negativeCharges; i++) {
         const angle = (i / 15) * Math.PI * 2;
         const rad = (i > 15 ? 0.6 : 0.3) * balloon.r;
