@@ -1,1 +1,390 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thí nghiệm tĩnh điện</title><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:Inter,system-ui,sans-serif;background:#f7f5f0;color:#1a1a1a}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 5px 20px #0001}canvas{display:block;width:100%;height:auto;background:#121212;border-radius:12px}</style></head><body class="p-4 sm:p-6"><main class="max-w-5xl mx-auto"><header class="mb-5"><span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded">Vật lí 12 • Tĩnh điện</span><h1 class="text-3xl sm:text-4xl font-black mt-3">Tĩnh điện: cọ xát và phân cực.</h1><p class="text-gray-600 mt-2">Kéo bóng bay cọ xát vào áo len để nhận electron, sau đó đưa bóng lại gần bức tường.</p></header><section class="panel p-4 sm:p-6"><div class="grid grid-cols-2 gap-3 mb-4 p-3 bg-gray-50 rounded-lg text-center"><div><b class="text-xs text-gray-500 uppercase">Electron dư trên bóng</b><strong id="count" class="block text-2xl text-blue-600">0</strong></div><div><b class="text-xs text-gray-500 uppercase">Trạng thái</b><strong id="state" class="block text-2xl text-gray-900">Trung hòa</strong></div></div><canvas id="canvas" width="800" height="450"></canvas><button id="reset" class="mt-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg px-5 py-3">Đặt lại thí nghiệm</button></section></main><script>const c=document.getElementById('canvas'),x=c.getContext('2d'),s={x:70,y:100,w:180,h:250,q:[]},w={x:630,y:50,w:110,h:350,q:[]},b={x:380,y:200,r:45,n:0,vx:0,vy:0,drag:false};const si=new Image(),bi=new Image();si.src='./1790256541776.png';bi.src='./1790256519761.png';let ox=0,oy=0;function reset(){s.q=[];w.q=[];Object.assign(b,{x:380,y:200,n:0,vx:0,vy:0,drag:false});for(let i=0;i<20;i++)s.q.push({x:s.x+30+Math.random()*120,y:s.y+30+Math.random()*190,e:true});for(let r=0;r<7;r++)for(let j=0;j<3;j++){let X=w.x+20+j*35,Y=w.y+30+r*45;w.q.push({x:X,y:Y,ex:X+12,ey:Y})}}function pt(a,d){let z=c.getBoundingClientRect();return{x:(a-z.left)*800/z.width,y:(d-z.top)*450/z.height}}function clamp(){b.x=Math.max(b.r,Math.min(w.x-b.r,b.x));b.y=Math.max(b.r,Math.min(450-b.r,b.y))}function plus(X,Y){x.strokeStyle='#dc2626';x.lineWidth=3;x.beginPath();x.moveTo(X-5,Y);x.lineTo(X+5,Y);x.moveTo(X,Y-5);x.lineTo(X,Y+5);x.stroke()}function minus(X,Y){x.strokeStyle='#2563eb';x.lineWidth=3;x.beginPath();x.moveTo(X-5,Y);x.lineTo(X+5,Y);x.stroke()}function start(a,d){let p=pt(a,d);if(Math.hypot(p.x-b.x,p.y-b.y)<=b.r){b.drag=true;ox=p.x-b.x;oy=p.y-b.y}}function move(a,d){if(!b.drag)return;let p=pt(a,d);b.x=p.x-ox;b.y=p.y-oy;clamp()}c.onmousedown=e=>start(e.clientX,e.clientY);addEventListener('mousemove',e=>move(e.clientX,e.clientY));addEventListener('mouseup',()=>b.drag=false);c.ontouchstart=e=>start(e.touches[0].clientX,e.touches[0].clientY);addEventListener('touchmove',e=>move(e.touches[0].clientX,e.touches[0].clientY),{passive:true});addEventListener('touchend',()=>b.drag=false);function update(){if(b.drag)s.q.forEach(q=>{if(q.e&&Math.hypot(b.x-q.x,b.y-q.y)<57){q.e=false;b.n++}});w.q.forEach(q=>{let dx=q.x-b.x,dy=q.y-b.y,d=Math.hypot(dx,dy)||1;if(b.n&&d<220){let a=Math.min(18,4+b.n*.8);q.ex=q.x+12+dx/d*a;q.ey=q.y+dy/d*a}else{q.ex+=(q.x+12-q.ex)*.1;q.ey+=(q.y-q.ey)*.1}});if(!b.drag&&b.n){let fx=0,fy=0;s.q.forEach(q=>{if(!q.e){let dx=q.x-b.x,dy=q.y-b.y,d=Math.hypot(dx,dy)||1;fx+=dx/d*.025;fy+=dy/d*.025}});if(w.x-b.x<260)fx+=.08;b.vx=(b.vx+fx)*.86;b.vy=(b.vy+fy)*.86;b.x+=b.vx;b.y+=b.vy;clamp()}}function draw(){x.clearRect(0,0,800,450);x.fillStyle='#121212';x.fillRect(0,0,800,450);x.strokeStyle='#ffffff12';for(let i=0;i<800;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,450);x.stroke()}for(let i=0;i<450;i+=32){x.beginPath();x.moveTo(0,i);x.lineTo(800,i);x.stroke()}if(si.complete&&si.naturalWidth)x.drawImage(si,s.x,s.y,s.w,s.h);else{x.fillStyle='#374151';x.fillRect(s.x,s.y,s.w,s.h)}s.q.forEach(q=>{plus(q.x,q.y);if(q.e)minus(q.x+8,q.y)});x.fillStyle='#6b7280';x.fillRect(w.x,w.y,w.w,w.h);w.q.forEach(q=>{plus(q.x,q.y);minus(q.ex,q.ey)});x.save();x.beginPath();x.arc(b.x,b.y,b.r,0,Math.PI*2);x.clip();if(bi.complete&&bi.naturalWidth)x.drawImage(bi,b.x-b.r,b.y-b.r,90,90);else{x.fillStyle='#f59e0b';x.fill()}x.restore();for(let i=0;i<b.n;i++){let a=i*Math.PI*2/15,r=i>15?27:14;minus(b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)}document.getElementById('count').textContent=b.n;document.getElementById('state').textContent=b.n?'Bóng tích điện âm':'Trung hòa';requestAnimationFrame(()=>{update();draw()})}document.getElementById('reset').onclick=reset;reset();draw();</script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thí nghiệm tĩnh điện</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      background: #f7f5f0;
+      color: #1a1a1a;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    }
+    canvas {
+      display: block;
+      width: min(100%, 800px);
+      height: auto;
+      background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+      border-radius: 14px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      touch-action: none;
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-6">
+  <main class="max-w-5xl mx-auto">
+    <header class="mb-5">
+      <span class="bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded">Vật lí 12 • Tĩnh điện</span>
+      <h1 class="text-3xl sm:text-4xl font-black mt-3">Tĩnh điện: cọ xát và phân cực.</h1>
+      <p class="text-gray-600 mt-2">Kéo bóng bay cọ xát vào áo len để nhận electron, sau đó thả gần bức tường để quan sát lực hút tĩnh điện.</p>
+    </header>
+
+    <section class="panel p-4 sm:p-6">
+      <div class="grid grid-cols-2 gap-3 mb-4 p-3 bg-gray-50 rounded-lg text-center">
+        <div>
+          <b class="text-xs text-gray-500 uppercase block mb-1">Electron dư</b>
+          <strong id="electronCount" class="block text-2xl text-blue-600 font-bold">0</strong>
+        </div>
+        <div>
+          <b class="text-xs text-gray-500 uppercase block mb-1">Trạng thái</b>
+          <strong id="statusText" class="block text-2xl text-gray-900 font-bold">Trung hòa</strong>
+        </div>
+      </div>
+
+      <canvas id="simCanvas" width="800" height="450"></canvas>
+
+      <button id="resetBtn" class="mt-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg px-5 py-3 transition-colors">
+        Đặt lại thí nghiệm
+      </button>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const sweaterImg = new Image();
+    const balloonImg = new Image();
+    sweaterImg.src = './1790256541776.png';
+    balloonImg.src = './1790256519761.png';
+
+    const sweater = { x: 70, y: 100, w: 180, h: 250, charges: [] };
+    const wall = { x: 630, y: 50, w: 110, h: 350, charges: [] };
+    const balloon = {
+      x: 380,
+      y: 200,
+      r: 45,
+      vx: 0,
+      vy: 0,
+      negativeCharges: 0,
+      isDragging: false
+    };
+
+    const PHYSICS = {
+      maxTransferDistance: 12,
+      polarizationDistance: 220,
+      damping: 0.86,
+      maxSpeed: 5.5
+    };
+
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    function initCharges() {
+      sweater.charges = [];
+      wall.charges = [];
+      balloon.negativeCharges = 0;
+      balloon.x = 380;
+      balloon.y = 200;
+      balloon.vx = 0;
+      balloon.vy = 0;
+      balloon.isDragging = false;
+
+      for (let i = 0; i < 20; i++) {
+        sweater.charges.push({
+          x: sweater.x + 30 + Math.random() * (sweater.w - 60),
+          y: sweater.y + 30 + Math.random() * (sweater.h - 60),
+          hasElectron: true
+        });
+      }
+
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 3; c++) {
+          const x = wall.x + 20 + c * 35;
+          const y = wall.y + 30 + r * 45;
+          wall.charges.push({
+            baseX: x,
+            baseY: y,
+            pX: x,
+            pY: y,
+            eX: x + 12,
+            eY: y
+          });
+        }
+      }
+    }
+
+    function drawPlus(x, y, scale = 1) {
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 3 * scale;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = 'rgba(250, 204, 21, 0.9)';
+      ctx.beginPath();
+      ctx.moveTo(x - 5 * scale, y);
+      ctx.lineTo(x + 5 * scale, y);
+      ctx.moveTo(x, y - 5 * scale);
+      ctx.lineTo(x, y + 5 * scale);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    function drawMinus(x, y, scale = 1) {
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 3 * scale;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = 'rgba(96, 165, 250, 0.9)';
+      ctx.beginPath();
+      ctx.moveTo(x - 5 * scale, y);
+      ctx.lineTo(x + 5 * scale, y);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    function canvasPoint(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (clientX - rect.left) * canvas.width / rect.width,
+        y: (clientY - rect.top) * canvas.height / rect.height
+      };
+    }
+
+    function keepBalloonInBounds() {
+      balloon.x = Math.max(balloon.r, Math.min(wall.x - balloon.r, balloon.x));
+      balloon.y = Math.max(balloon.r, Math.min(canvas.height - balloon.r, balloon.y));
+    }
+
+    function handleStart(clientX, clientY) {
+      const p = canvasPoint(clientX, clientY);
+      if (Math.hypot(p.x - balloon.x, p.y - balloon.y) <= balloon.r) {
+        balloon.isDragging = true;
+        balloon.vx = 0;
+        balloon.vy = 0;
+        dragOffsetX = p.x - balloon.x;
+        dragOffsetY = p.y - balloon.y;
+      }
+    }
+
+    function handleMove(clientX, clientY) {
+      if (!balloon.isDragging) return;
+      const p = canvasPoint(clientX, clientY);
+      balloon.x = p.x - dragOffsetX;
+      balloon.y = p.y - dragOffsetY;
+      keepBalloonInBounds();
+    }
+
+    function handleEnd() {
+      balloon.isDragging = false;
+    }
+
+    canvas.addEventListener('mousedown', (e) => handleStart(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', handleEnd);
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        handleStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) {
+        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', handleEnd);
+
+    function updatePolarization() {
+      wall.charges.forEach((pair) => {
+        const dx = pair.baseX - balloon.x;
+        const dy = pair.baseY - balloon.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (balloon.negativeCharges > 0 && dist < PHYSICS.polarizationDistance) {
+          const amount = (1 - dist / PHYSICS.polarizationDistance) * Math.min(18, 4 + balloon.negativeCharges * 0.8);
+          const nx = dist ? dx / dist : 1;
+          const ny = dist ? dy / dist : 0;
+          pair.eX = pair.baseX + 12 + nx * amount;
+          pair.eY = pair.baseY + ny * amount;
+        } else {
+          pair.eX += (pair.baseX + 12 - pair.eX) * 0.12;
+          pair.eY += (pair.baseY - pair.eY) * 0.12;
+        }
+      });
+    }
+
+    function update() {
+      if (balloon.isDragging) {
+        sweater.charges.forEach((q) => {
+          if (q.hasElectron) {
+            const dist = Math.hypot(balloon.x - q.x, balloon.y - q.y);
+            if (dist <= balloon.r + PHYSICS.maxTransferDistance) {
+              q.hasElectron = false;
+              balloon.negativeCharges++;
+            }
+          }
+        });
+      }
+
+      updatePolarization();
+
+      if (!balloon.isDragging && balloon.negativeCharges > 0) {
+        let fx = 0;
+        let fy = 0;
+
+        sweater.charges.forEach((q) => {
+          if (!q.hasElectron) {
+            const dx = q.x - balloon.x;
+            const dy = q.y - balloon.y;
+            const d = Math.hypot(dx, dy) || 1;
+            if (d < 360) {
+              const force = Math.min(0.12, 0.018 / Math.max(0.25, d / 100));
+              fx += (dx / d) * force;
+              fy += (dy / d) * force;
+            }
+          }
+        });
+
+        const targetX = wall.x - balloon.r;
+        const gap = targetX - balloon.x;
+        if (gap > 0 && gap < 260) {
+          const force = Math.min(0.28, (balloon.negativeCharges * 0.012) / Math.max(25, gap));
+          fx += force * 18;
+        }
+
+        balloon.vx = Math.max(-PHYSICS.maxSpeed, Math.min(PHYSICS.maxSpeed, (balloon.vx + fx) * PHYSICS.damping));
+        balloon.vy = Math.max(-PHYSICS.maxSpeed, Math.min(PHYSICS.maxSpeed, (balloon.vy + fy) * PHYSICS.damping));
+        balloon.x += balloon.vx;
+        balloon.y += balloon.vy;
+
+        keepBalloonInBounds();
+        if (balloon.x >= targetX - 1) {
+          balloon.x = targetX;
+          balloon.vx = 0;
+        }
+      }
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.12)';
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x < canvas.width; x += 32) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y < canvas.height; y += 32) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawSweater() {
+      if (sweaterImg.complete && sweaterImg.naturalWidth !== 0) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(96, 165, 250, 0.2)';
+        ctx.shadowBlur = 18;
+        ctx.drawImage(sweaterImg, sweater.x, sweater.y, sweater.w, sweater.h);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#374151';
+        ctx.beginPath();
+        ctx.roundRect(sweater.x, sweater.y, sweater.w, sweater.h, 16);
+        ctx.fill();
+      }
+
+      sweater.charges.forEach((q) => {
+        drawPlus(q.x, q.y, 1.2);
+        if (q.hasElectron) drawMinus(q.x + 8, q.y, 1.2);
+      });
+    }
+
+    function drawWall() {
+      const wallGradient = ctx.createLinearGradient(wall.x, wall.y, wall.x + wall.w, wall.y + wall.h);
+      wallGradient.addColorStop(0, '#6b7280');
+      wallGradient.addColorStop(1, '#374151');
+      ctx.fillStyle = wallGradient;
+      ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillRect(wall.x + 10, wall.y + 12, wall.w - 20, wall.h - 24);
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Bức Tường', wall.x + 18, wall.y - 12);
+
+      wall.charges.forEach((pair) => {
+        drawPlus(pair.pX, pair.pY, 1.1);
+        drawMinus(pair.eX, pair.eY, 1.1);
+      });
+    }
+
+    function drawBalloon() {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
+      ctx.clip();
+
+      if (balloonImg.complete && balloonImg.naturalWidth !== 0) {
+        ctx.drawImage(balloonImg, balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
+      } else {
+        const grad = ctx.createRadialGradient(balloon.x - 10, balloon.y - 12, 8, balloon.x, balloon.y, balloon.r * 1.2);
+        grad.addColorStop(0, '#fef3c7');
+        grad.addColorStop(0.4, '#f59e0b');
+        grad.addColorStop(1, '#ea580c');
+        ctx.fillStyle = grad;
+        ctx.fillRect(balloon.x - balloon.r, balloon.y - balloon.r, balloon.r * 2, balloon.r * 2);
+      }
+
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(balloon.x, balloon.y, balloon.r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(96, 165, 250, 0.4)';
+      ctx.shadowBlur = 16;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      for (let i = 0; i < balloon.negativeCharges; i++) {
+        const angle = (i / 15) * Math.PI * 2;
+        const rad = (i > 15 ? 0.6 : 0.3) * balloon.r;
+        drawMinus(balloon.x + Math.cos(angle) * rad, balloon.y + Math.sin(angle) * rad, 1.1);
+      }
+    }
+
+    function render() {
+      drawBackground();
+      drawSweater();
+      drawWall();
+      drawBalloon();
+
+      document.getElementById('electronCount').textContent = balloon.negativeCharges;
+      document.getElementById('statusText').textContent = balloon.negativeCharges > 0 ? 'Bóng tích điện âm' : 'Trung hòa';
+
+      requestAnimationFrame(() => {
+        update();
+        render();
+      });
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', initCharges);
+    initCharges();
+    render();
+  </script>
+</body>
+</html>
